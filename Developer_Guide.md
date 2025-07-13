@@ -1340,8 +1340,8 @@ vyges generate all --from-metadata vyges-metadata.json
   "design_type": ["digital"],
   "maturity": "beta",
   "template": "vyges-ip-template@1.0.0",
-  "created": "2024-01-15T10:30:00Z",
-  "updated": "2024-01-15T10:30:00Z",
+  "created": "2025-01-15T10:30:00Z",
+  "updated": "2025-01-15T10:30:00Z",
   "maintainers": [
     {
       "name": "Jane Doe",
@@ -1372,7 +1372,7 @@ vyges generate all --from-metadata vyges-metadata.json
       "generator": "vyges-cli",
       "init_tool": "vyges-cli",
       "template_version": "1.0.0",
-      "generated_at": "2024-01-15T10:30:00Z"
+      "generated_at": "2025-01-15T10:30:00Z"
     },
     "ai_generation": {
       "mode": "full_automation",

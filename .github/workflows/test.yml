@@ -1,0 +1,175 @@
+name: SD Card Controller IP Tests
+
+on:
+  # Manual trigger (workflow_dispatch)
+  workflow_dispatch:
+  
+  # Uncomment the lines below to enable automatic triggers
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Verilator
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y verilator
+        
+    - name: Run Verilator linting
+      run: |
+        cd rtl
+        verilator --lint-only --top-module sd_card_controller \
+          sd_card_controller.sv \
+          sd_apb_interface.sv \
+          sd_register_file.sv \
+          sd_command_engine.sv \
+          sd_data_engine.sv \
+          sd_clock_generator.sv \
+          sd_dma_controller.sv \
+          sd_power_controller.sv \
+          sd_security_controller.sv \
+          sd_debug_controller.sv \
+          sd_test_controller.sv \
+          sd_error_controller.sv \
+          sd_performance_controller.sv \
+          sd_calibration_controller.sv \
+          sd_interrupt_controller.sv \
+          sd_interface.sv
+
+  simulation:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        simulator: [iverilog, verilator]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install ${{ matrix.simulator }}
+      run: |
+        sudo apt-get update
+        if [ "${{ matrix.simulator }}" = "iverilog" ]; then
+          sudo apt-get install -y iverilog
+        elif [ "${{ matrix.simulator }}" = "verilator" ]; then
+          sudo apt-get install -y verilator
+        fi
+        
+    - name: Run simulation tests
+      run: |
+        cd tb
+        make SIM=${{ matrix.simulator }} run
+
+  cocotb-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install cocotb pytest pytest-cov
+        
+    - name: Install Verilator
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y verilator
+        
+    - name: Run cocotb tests
+      run: |
+        cd tb
+        make SIM=cocotb run
+
+  synthesis:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Yosys
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y yosys
+        
+    - name: Run synthesis
+      run: |
+        cd flow/openlane
+        yosys -p "synth_sky130 -top sd_card_controller -json sd_card_controller.json" \
+          ../../rtl/sd_card_controller.sv \
+          ../../rtl/sd_apb_interface.sv \
+          ../../rtl/sd_register_file.sv \
+          ../../rtl/sd_command_engine.sv \
+          ../../rtl/sd_data_engine.sv \
+          ../../rtl/sd_clock_generator.sv \
+          ../../rtl/sd_dma_controller.sv \
+          ../../rtl/sd_power_controller.sv \
+          ../../rtl/sd_security_controller.sv \
+          ../../rtl/sd_debug_controller.sv \
+          ../../rtl/sd_test_controller.sv \
+          ../../rtl/sd_error_controller.sv \
+          ../../rtl/sd_performance_controller.sv \
+          ../../rtl/sd_calibration_controller.sv \
+          ../../rtl/sd_interrupt_controller.sv \
+          ../../rtl/sd_interface.sv
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check documentation
+      run: |
+        # Check if all required documentation files exist
+        test -f docs/sd_card_controller_design_spec.md
+        test -f docs/architecture.md
+        test -f docs/overview.md
+        test -f docs/user_guide.md
+        test -f docs/api_reference.md
+        test -f README.md
+        
+    - name: Validate markdown
+      run: |
+        # Basic markdown validation
+        find docs/ -name "*.md" -exec echo "Checking {}" \;
+        find docs/ -name "*.md" -exec grep -l "TODO" {} \; || true
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install cocotb pytest pytest-cov coverage
+        
+    - name: Install Verilator
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y verilator
+        
+    - name: Run coverage tests
+      run: |
+        cd tb
+        make SIM=cocotb coverage
+        
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false 
