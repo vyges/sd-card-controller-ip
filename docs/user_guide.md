@@ -5,7 +5,7 @@
 ### Basic Integration
 ```systemverilog
 // Instantiate the SD Card Controller
-sd_card_controller sd_ctrl (
+sdcard_controller sdcard_ctrl (
     .clk_i        (system_clk),
     .reset_n_i    (system_reset_n),
     .psel_i       (apb_psel),
@@ -18,10 +18,10 @@ sd_card_controller sd_ctrl (
     .pslverr_o    (apb_pslverr),
     .sd_clk_o     (sd_clk),
     .sd_cmd_io    (sd_cmd),
-    .sd_data_io   (sd_data),
+    .sd_dat_io    (sd_data),
     .sd_cd_i      (sd_card_detect),
     .sd_wp_i      (sd_write_protect),
-    .irq_o        (sd_interrupt)
+    .sd_irq_o     (sd_interrupt)
 );
 ```
 
@@ -73,12 +73,12 @@ sd_card_controller sd_ctrl (
 ### APB Access
 ```c
 // Write to register
-void sd_write_reg(uint32_t addr, uint32_t data) {
+void sdcard_write_reg(uint32_t addr, uint32_t data) {
     // APB write sequence
 }
 
 // Read from register
-uint32_t sd_read_reg(uint32_t addr) {
+uint32_t sdcard_read_reg(uint32_t addr) {
     // APB read sequence
 }
 ```
@@ -86,10 +86,10 @@ uint32_t sd_read_reg(uint32_t addr) {
 ### Command Interface
 ```c
 // Send SD command
-int sd_send_command(uint8_t cmd, uint32_t arg) {
-    sd_write_reg(0x010, cmd);
-    sd_write_reg(0x014, arg);
-    sd_write_reg(0x018, 0x01); // Start command
+int sdcard_send_command(uint8_t cmd, uint32_t arg) {
+    sdcard_write_reg(0x010, cmd);
+    sdcard_write_reg(0x014, arg);
+    sdcard_write_reg(0x018, 0x01); // Start command
     return wait_command_complete();
 }
 ```

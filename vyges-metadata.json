@@ -1,9 +1,9 @@
 {
   "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
   "x-version": "1.0.0",
-  "name": "vyges/sd-card-controller",
+  "name": "vyges/sdcard-controller",
   "version": "1.0.0",
-  "description": "High-performance SD Card controller with APB interface supporting SD/SDHC/SDXC cards with SPI and SD modes, DMA support, and comprehensive error handling.",
+  "description": "High-performance SD Card controller with APB interface supporting SD/SDHC/SDXC cards with SPI and SD modes, DMA support, comprehensive error handling, security features, and debug capabilities.",
   "license": "Apache-2.0",
   "template": "vyges-ip-template@1.0.0",
   "target": [
@@ -15,7 +15,7 @@
   ],
   "maturity": "prototype",
   "created": "2025-08-15T00:00:00Z",
-  "updated": "2025-08-15T00:00:00Z",
+  "updated": "2025-08-18T00:00:00Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/sd-card-controller-ip",
@@ -34,7 +34,7 @@
   "branding": {
     "provider": "Vyges",
     "logo": "https://vyges.com/images/logo.svg",
-    "website": "https://vyges.com/catalog/sd-card-controller",
+    "website": "https://vyges.com/catalog/sdcard-controller",
     "usage": "Use of the logo is permitted for attribution or compatibility references only."
   },
   "interfaces": [
@@ -107,6 +107,13 @@
           "type": "control",
           "width": 1,
           "description": "APB ready signal"
+        },
+        {
+          "name": "PSLVERR_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1,
+          "description": "APB slave error signal"
         }
       ]
     },
@@ -149,6 +156,20 @@
           "type": "status",
           "width": 1,
           "description": "Write protect"
+        },
+        {
+          "name": "sd_pwr_en_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1,
+          "description": "SD card power enable"
+        },
+        {
+          "name": "sd_vdd_sel_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1,
+          "description": "SD card voltage select"
         }
       ]
     },
@@ -170,6 +191,20 @@
           "type": "interrupt",
           "width": 1,
           "description": "DMA transfer complete interrupt"
+        },
+        {
+          "name": "error_irq_o",
+          "direction": "output",
+          "type": "interrupt",
+          "width": 1,
+          "description": "Error condition interrupt"
+        },
+        {
+          "name": "debug_irq_o",
+          "direction": "output",
+          "type": "interrupt",
+          "width": 1,
+          "description": "Debug event interrupt"
         }
       ]
     },
@@ -213,13 +248,83 @@
           "type": "control",
           "width": 1,
           "description": "DMA write enable"
+        },
+        {
+          "name": "dma_burst_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1,
+          "description": "DMA burst mode"
+        },
+        {
+          "name": "dma_cache_o",
+          "direction": "output",
+          "type": "control",
+          "width": 4,
+          "description": "DMA cache attributes"
+        }
+      ]
+    },
+    {
+      "type": "debug",
+      "direction": "bidirectional",
+      "protocol": "JTAG",
+      "signals": [
+        {
+          "name": "jtag_tck_i",
+          "direction": "input",
+          "type": "clock",
+          "width": 1,
+          "description": "JTAG test clock"
+        },
+        {
+          "name": "jtag_tms_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1,
+          "description": "JTAG test mode select"
+        },
+        {
+          "name": "jtag_tdi_i",
+          "direction": "input",
+          "type": "data",
+          "width": 1,
+          "description": "JTAG test data input"
+        },
+        {
+          "name": "jtag_tdo_o",
+          "direction": "output",
+          "type": "data",
+          "width": 1,
+          "description": "JTAG test data output"
+        },
+        {
+          "name": "jtag_trst_n_i",
+          "direction": "input",
+          "type": "reset",
+          "width": 1,
+          "description": "JTAG test reset"
+        },
+        {
+          "name": "trace_data_o",
+          "direction": "output",
+          "type": "data",
+          "width": 8,
+          "description": "Trace data output"
+        },
+        {
+          "name": "trace_valid_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1,
+          "description": "Trace data valid"
         }
       ]
     }
   ],
   "parameters": [
     {
-      "name": "APB_ADDR_WIDTH",
+      "name": "SDCARD_APB_ADDR_WIDTH",
       "type": "int",
       "default": 16,
       "description": "Width of APB address bus",
@@ -231,7 +336,7 @@
       "required": false
     },
     {
-      "name": "SD_DATA_WIDTH",
+      "name": "SDCARD_DATA_WIDTH",
       "type": "int",
       "default": 4,
       "description": "SD card data width (1, 4, or 8 bits)",
@@ -243,7 +348,7 @@
       "required": false
     },
     {
-      "name": "FIFO_DEPTH",
+      "name": "SDCARD_FIFO_DEPTH",
       "type": "int",
       "default": 512,
       "description": "FIFO depth for data buffering",
@@ -255,14 +360,14 @@
       "required": false
     },
     {
-      "name": "DMA_ENABLE",
+      "name": "SDCARD_DMA_ENABLE",
       "type": "bool",
       "default": true,
       "description": "Enable DMA support",
       "required": false
     },
     {
-      "name": "SPI_MODE_ENABLE",
+      "name": "SDCARD_SPI_MODE_ENABLE",
       "type": "bool",
       "default": true,
       "description": "Enable SPI mode support",
@@ -272,7 +377,7 @@
   "categories": {
     "primary": "storage",
     "secondary": ["peripheral", "controller", "communication"],
-    "tags": ["sd-card", "storage", "apb", "dma", "spi", "sdhc", "sdxc"]
+    "tags": ["sdcard", "storage", "apb", "dma", "spi", "sdhc", "sdxc", "security", "debug"]
   },
   "community": {
     "issues": "https://github.com/vyges/sd-card-controller-ip/issues",
@@ -289,7 +394,7 @@
       "verilator",
       "iverilog"
     ],
-    "status": "passing",
+    "status": "in_progress",
     "coverage_targets": {
       "functional": 95,
       "code": 90,
@@ -298,19 +403,19 @@
   },
   "flows": {
     "verilator": {
-      "status": "verified",
-      "testbench": "tb/sv_tb/tb_sd_controller.sv"
+      "status": "in_progress",
+      "testbench": "tb/sv_tb/tb_sdcard_controller.sv"
     },
     "openlane": {
       "pdks": [
         "sky130B"
       ],
-      "status": "tested",
+      "status": "planned",
       "clock_freq_mhz": 50,
       "area_um2": 50000
     },
     "vivado": {
-      "status": "partial",
+      "status": "planned",
       "target_board": "arty-a7-35",
       "clock_freq_mhz": 100
     }
@@ -323,7 +428,7 @@
     "synthesis_tool": "openlane",
     "clock_freq_mhz": 50,
     "constraints": [
-      "constraints/asic/sd_controller.sdc"
+      "constraints/asic/sdcard_controller.sdc"
     ],
     "tools": [
       "yosys",
@@ -336,7 +441,7 @@
     "board": "arty-a7-35",
     "cfu_playground_compatible": true,
     "constraints": [
-      "constraints/fpga/sd_controller.xdc"
+      "constraints/fpga/sdcard_controller.xdc"
     ],
     "resource_usage": {
       "lut": 2000,
@@ -348,19 +453,19 @@
     "examples": [
       {
         "target": "simulation",
-        "wrapper": "integration/sd_controller_wrapper.v",
-        "tb": "integration/sd_controller_tb.v",
+        "wrapper": "integration/sdcard_controller_wrapper.v",
+        "tb": "integration/sdcard_controller_tb.v",
         "description": "Basic simulation example"
       },
       {
         "target": "fpga",
-        "wrapper": "integration/fpga_sd_controller_wrapper.v",
-        "tb": "integration/fpga_sd_controller_tb.v",
+        "wrapper": "integration/fpga_sdcard_controller_wrapper.v",
+        "tb": "integration/fpga_sdcard_controller_tb.v",
         "description": "FPGA integration example"
       },
       {
         "target": "asic",
-        "wrapper": "integration/asic_sd_controller_wrapper.v",
+        "wrapper": "integration/asic_sdcard_controller_wrapper.v",
         "description": "ASIC integration example"
       }
     ]
@@ -369,15 +474,20 @@
     "error_detection": [
       "crc",
       "timeout",
-      "protocol"
+      "protocol",
+      "power_fault",
+      "tamper_detection"
     ],
     "error_correction": [
       "retry",
-      "status_reporting"
+      "status_reporting",
+      "automatic_recovery"
     ],
     "fault_tolerance": [
       "card_removal",
-      "busy_handling"
+      "busy_handling",
+      "power_management",
+      "security_validation"
     ],
     "test_coverage": 95
   },
@@ -413,7 +523,7 @@
       "generator": "vyges-cli",
       "init_tool": "vyges-cli",
       "template_version": "1.0.0",
-      "generated_at": "2025-08-15T00:00:00Z"
+      "generated_at": "2025-08-18T00:00:00Z"
     },
     "generated_by": "vyges-cli",
     "schema": {

@@ -1,0 +1,1 @@
+ I have a specification and architecture for SD Card Controller @sd_card_controller_design_spec.md @architecture.md  Using Vyges GOD-mode conventions, please create all the structure, needed source code files, documentation, cocotb based test benches and everything. Let me know if you need anything else.

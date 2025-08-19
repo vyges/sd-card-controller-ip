@@ -36,27 +36,27 @@ This document describes the internal architecture, interfaces, and design detail
 │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐        │
 │  │  Register File  │    │   Clock Gen     │    │   Data FIFO     │        │
 │  │                 │    │                 │    │                 │        │
-│  │ SD_CTRL         │    │ Configurable    │    │ TX FIFO         │        │
-│  │ SD_STATUS       │    │ Clock Divider   │    │ RX FIFO         │        │
-│  │ SD_CMD          │    │ Enable/Disable  │    │ Flow Control    │        │
-│  │ SD_ARG          │    │ Frequency Scale │    │ Status Flags    │        │
-│  │ SD_RESP[0:3]    │    │ Calibration     │    │ Error Handling  │        │
-│  │ SD_DATA         │    │                 │    │                 │        │
-│  │ SD_BLK_CNT      │    │                 │    │                 │        │
-│  │ SD_BLK_SIZE     │    │                 │    │                 │        │
-│  │ SD_TIMEOUT      │    │                 │    │                 │        │
-│  │ SD_CLK_DIV      │    │                 │    │                 │        │
-│  │ SD_INT_EN       │    │                 │    │                 │        │
-│  │ SD_INT_STAT     │    │                 │    │                 │        │
-│  │ SD_DMA_CTRL     │    │                 │    │                 │        │
-│  │ SD_PWR_CTRL     │    │                 │    │                 │        │
-│  │ SD_SEC_CTRL     │    │                 │    │                 │        │
-│  │ SD_DEBUG_CTRL   │    │                 │    │                 │        │
-│  │ SD_TEST_CTRL    │    │                 │    │                 │        │
-│  │ SD_ERROR_CTRL   │    │                 │    │                 │        │
-│  │ SD_PERF_CTRL    │    │                 │    │                 │        │
-│  │ SD_CAL_CTRL     │    │                 │    │                 │        │
-│  │ SD_VERSION      │    │                 │    │                 │        │
+│  │ SDCARD_CTRL         │    │ Configurable    │    │ TX FIFO         │        │
+│  │ SDCARD_STATUS       │    │ Clock Divider   │    │ RX FIFO         │        │
+│  │ SDCARD_CMD          │    │ Enable/Disable  │    │ Flow Control    │        │
+│  │ SDCARD_ARG          │    │ Frequency Scale │    │ Status Flags    │        │
+│  │ SDCARD_RESP[0:3]    │    │ Calibration     │    │ Error Handling  │        │
+│  │ SDCARD_DATA         │    │                 │    │                 │        │
+│  │ SDCARD_BLK_CNT      │    │                 │    │                 │        │
+│  │ SDCARD_BLK_SIZE     │    │                 │    │                 │        │
+│  │ SDCARD_TIMEOUT      │    │                 │    │                 │        │
+│  │ SDCARD_CLK_DIV      │    │                 │    │                 │        │
+│  │ SDCARD_INT_EN       │    │                 │    │                 │        │
+│  │ SDCARD_INT_STAT     │    │                 │    │                 │        │
+│  │ SDCARD_DMA_CTRL     │    │                 │    │                 │        │
+│  │ SDCARD_PWR_CTRL     │    │                 │    │                 │        │
+│  │ SDCARD_SEC_CTRL     │    │                 │    │                 │        │
+│  │ SDCARD_DEBUG_CTRL   │    │                 │    │                 │        │
+│  │ SDCARD_TEST_CTRL    │    │                 │    │                 │        │
+│  │ SDCARD_ERROR_CTRL   │    │                 │    │                 │        │
+│  │ SDCARD_PERF_CTRL    │    │                 │    │                 │        │
+│  │ SDCARD_CAL_CTRL     │    │                 │    │                 │        │
+│  │ SDCARD_VERSION      │    │                 │    │                 │        │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘        │
 │           │                       │                       │                │
 │           │                       │                       │                │
@@ -135,7 +135,7 @@ This document describes the internal architecture, interfaces, and design detail
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `APB_ADDR_WIDTH` | int | 16 | Width of APB address bus |
-| `SD_DATA_WIDTH` | int | 4 | SD card data width (1, 4, or 8 bits) |
+| `SDCARD_DATA_WIDTH` | int | 4 | SD card data width (1, 4, or 8 bits) |
 | `FIFO_DEPTH` | int | 512 | FIFO depth for data buffering |
 | `DMA_ENABLE` | bool | true | Enable DMA support |
 | `SPI_MODE_ENABLE` | bool | true | Enable SPI mode support |
@@ -210,30 +210,30 @@ This document describes the internal architecture, interfaces, and design detail
 
 | Address | Register Name | Access | Description |
 |---------|---------------|--------|-------------|
-| 0x00 | SD_CTRL | R/W | Control register |
-| 0x04 | SD_STATUS | R | Status register |
-| 0x08 | SD_CMD | R/W | Command register |
-| 0x0C | SD_ARG | R/W | Command argument |
-| 0x10 | SD_RESP[0] | R | Response register 0 |
-| 0x14 | SD_RESP[1] | R | Response register 1 |
-| 0x18 | SD_RESP[2] | R | Response register 2 |
-| 0x1C | SD_RESP[3] | R | Response register 3 |
-| 0x20 | SD_DATA | R/W | Data register |
-| 0x24 | SD_BLK_CNT | R/W | Block count register |
-| 0x28 | SD_BLK_SIZE | R/W | Block size register |
-| 0x2C | SD_TIMEOUT | R/W | Timeout register |
-| 0x30 | SD_CLK_DIV | R/W | Clock divider register |
-| 0x34 | SD_INT_EN | R/W | Interrupt enable register |
-| 0x38 | SD_INT_STAT | R/W | Interrupt status register |
-| 0x3C | SD_DMA_CTRL | R/W | DMA control register |
-| 0x40 | SD_PWR_CTRL | R/W | Power control register |
-| 0x44 | SD_SEC_CTRL | R/W | Security control register |
-| 0x48 | SD_DEBUG_CTRL | R/W | Debug control register |
-| 0x4C | SD_TEST_CTRL | R/W | Test control register |
-| 0x50 | SD_ERROR_CTRL | R/W | Error control register |
-| 0x54 | SD_PERF_CTRL | R/W | Performance control register |
-| 0x58 | SD_CAL_CTRL | R/W | Calibration control register |
-| 0x5C | SD_VERSION | R | Version register |
+| 0x00 | SDCARD_CTRL | R/W | Control register |
+| 0x04 | SDCARD_STATUS | R | Status register |
+| 0x08 | SDCARD_CMD | R/W | Command register |
+| 0x0C | SDCARD_ARG | R/W | Command argument |
+| 0x10 | SDCARD_RESP[0] | R | Response register 0 |
+| 0x14 | SDCARD_RESP[1] | R | Response register 1 |
+| 0x18 | SDCARD_RESP[2] | R | Response register 2 |
+| 0x1C | SDCARD_RESP[3] | R | Response register 3 |
+| 0x20 | SDCARD_DATA | R/W | Data register |
+| 0x24 | SDCARD_BLK_CNT | R/W | Block count register |
+| 0x28 | SDCARD_BLK_SIZE | R/W | Block size register |
+| 0x2C | SDCARD_TIMEOUT | R/W | Timeout register |
+| 0x30 | SDCARD_CLK_DIV | R/W | Clock divider register |
+| 0x34 | SDCARD_INT_EN | R/W | Interrupt enable register |
+| 0x38 | SDCARD_INT_STAT | R/W | Interrupt status register |
+| 0x3C | SDCARD_DMA_CTRL | R/W | DMA control register |
+| 0x40 | SDCARD_PWR_CTRL | R/W | Power control register |
+| 0x44 | SDCARD_SEC_CTRL | R/W | Security control register |
+| 0x48 | SDCARD_DEBUG_CTRL | R/W | Debug control register |
+| 0x4C | SDCARD_TEST_CTRL | R/W | Test control register |
+| 0x50 | SDCARD_ERROR_CTRL | R/W | Error control register |
+| 0x54 | SDCARD_PERF_CTRL | R/W | Performance control register |
+| 0x58 | SDCARD_CAL_CTRL | R/W | Calibration control register |
+| 0x5C | SDCARD_VERSION | R | Version register |
 
 ---
 

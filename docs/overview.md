@@ -29,16 +29,21 @@ The SD Card Controller IP is a high-performance, feature-rich implementation des
 
 The SD Card Controller consists of several key modules:
 
-1. **APB Interface**: Handles register access and configuration
-2. **Register File**: Contains all control and status registers
-3. **Command Engine**: Manages SD command generation and response processing
-4. **Data Engine**: Handles data transfer operations
-5. **Clock Generator**: Provides configurable SD card clock
-6. **DMA Controller**: Manages efficient data movement
-7. **Power Controller**: Implements power management features
-8. **Security Controller**: Provides encryption and authentication
-9. **Debug Controller**: Enables debugging and monitoring
-10. **Test Controller**: Supports testing and validation
+1. **APB Interface** (`sdcard_apb_interface`): Handles register access and configuration
+2. **Register File** (`sdcard_register_file`): Contains all control and status registers
+3. **Command Engine** (`sdcard_command_engine`): Manages SD command generation and response processing
+4. **Data Engine** (`sdcard_data_engine`): Handles data transfer operations
+5. **Clock Generator** (`sdcard_clock_generator`): Provides configurable SD card clock
+6. **DMA Controller** (`sdcard_dma_controller`): Manages efficient data movement
+7. **Power Controller** (`sdcard_power_controller`): Implements power management features
+8. **Security Controller** (`sdcard_security_controller`): Provides encryption and authentication
+9. **Debug Controller** (`sdcard_debug_controller`): Enables debugging and monitoring
+10. **Test Controller** (`sdcard_test_controller`): Supports testing and validation
+11. **Error Controller** (`sdcard_error_controller`): Handles error detection and recovery
+12. **Performance Controller** (`sdcard_performance_controller`): Monitors performance metrics
+13. **Calibration Controller** (`sdcard_calibration_controller`): Manages timing calibration
+14. **Interrupt Controller** (`sdcard_interrupt_controller`): Manages interrupt generation
+15. **Interface Module** (`sdcard_interface`): Manages SD card physical interface
 
 ## Performance Characteristics
 

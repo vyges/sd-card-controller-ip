@@ -38,21 +38,21 @@ A high-performance SD Card controller with APB interface supporting SD/SDHC/SDXC
 
 The SD Card Controller consists of the following key modules:
 
-- **APB Interface**: Standard APB slave interface
-- **Register File**: Control and status register management
-- **Command Engine**: SD command generation and response parsing
-- **Data Engine**: Data block transmission/reception with CRC
-- **Clock Generator**: Configurable SD card clock generation
-- **DMA Controller**: Optional DMA support for high-speed transfers
-- **Power Controller**: Dynamic power management and voltage scaling
-- **Security Controller**: Hardware-based encryption and authentication
-- **Debug Controller**: Comprehensive debugging and monitoring
-- **Test Controller**: Built-in self-test and manufacturing test support
-- **Error Controller**: Robust error detection and recovery
-- **Performance Controller**: Real-time performance metrics
-- **Calibration Controller**: Automatic timing and signal calibration
-- **Interrupt Controller**: Event-driven interrupt generation
-- **Interface Module**: SD card physical interface management
+- **APB Interface** (`sdcard_apb_interface`): Standard APB slave interface
+- **Register File** (`sdcard_register_file`): Control and status register management
+- **Command Engine** (`sdcard_command_engine`): SD command generation and response parsing
+- **Data Engine** (`sdcard_data_engine`): Data block transmission/reception with CRC
+- **Clock Generator** (`sdcard_clock_generator`): Configurable SD card clock generation
+- **DMA Controller** (`sdcard_dma_controller`): Optional DMA support for high-speed transfers
+- **Power Controller** (`sdcard_power_controller`): Dynamic power management and voltage scaling
+- **Security Controller** (`sdcard_security_controller`): Hardware-based encryption and authentication
+- **Debug Controller** (`sdcard_debug_controller`): Comprehensive debugging and monitoring
+- **Test Controller** (`sdcard_test_controller`): Built-in self-test and manufacturing test support
+- **Error Controller** (`sdcard_error_controller`): Robust error detection and recovery
+- **Performance Controller** (`sdcard_performance_controller`): Real-time performance metrics
+- **Calibration Controller** (`sdcard_calibration_controller`): Automatic timing and signal calibration
+- **Interrupt Controller** (`sdcard_interrupt_controller`): Event-driven interrupt generation
+- **Interface Module** (`sdcard_interface`): SD card physical interface management
 
 ## 📖 Documentation
 
@@ -95,9 +95,9 @@ The SD Card Controller consists of the following key modules:
 
 ### Basic Instantiation
 ```systemverilog
-sd_card_controller sd_ctrl (
-    .clk_i        (system_clk),
-    .reset_n_i    (system_reset_n),
+sdcard_controller sdcard_ctrl (
+    .PCLK_i       (system_clk),
+    .PRESETn_i    (system_reset_n),
     .psel_i       (apb_psel),
     .penable_i    (apb_penable),
     .pwrite_i     (apb_pwrite),

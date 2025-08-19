@@ -316,30 +316,30 @@ Debug Interface Signals:
 
 | Address | Register Name | Access | Description |
 |---------|---------------|--------|-------------|
-| 0x00 | SD_CTRL | R/W | Control register |
-| 0x04 | SD_STATUS | R | Status register |
-| 0x08 | SD_CMD | R/W | Command register |
-| 0x0C | SD_ARG | R/W | Command argument |
-| 0x10 | SD_RESP[0] | R | Response register 0 |
-| 0x14 | SD_RESP[1] | R | Response register 1 |
-| 0x18 | SD_RESP[2] | R | Response register 2 |
-| 0x1C | SD_RESP[3] | R | Response register 3 |
-| 0x20 | SD_DATA | R/W | Data register |
-| 0x24 | SD_BLK_CNT | R/W | Block count register |
-| 0x28 | SD_BLK_SIZE | R/W | Block size register |
-| 0x2C | SD_TIMEOUT | R/W | Timeout register |
-| 0x30 | SD_CLK_DIV | R/W | Clock divider register |
-| 0x34 | SD_INT_EN | R/W | Interrupt enable register |
-| 0x38 | SD_INT_STAT | R/W | Interrupt status register |
-| 0x3C | SD_DMA_CTRL | R/W | DMA control register |
-| 0x40 | SD_PWR_CTRL | R/W | Power control register |
-| 0x44 | SD_SEC_CTRL | R/W | Security control register |
-| 0x48 | SD_DEBUG_CTRL | R/W | Debug control register |
-| 0x4C | SD_TEST_CTRL | R/W | Test control register |
-| 0x50 | SD_ERROR_CTRL | R/W | Error control register |
-| 0x54 | SD_PERF_CTRL | R/W | Performance control register |
-| 0x58 | SD_CAL_CTRL | R/W | Calibration control register |
-| 0x5C | SD_VERSION | R | Version register |
+| 0x00 | SDCARD_CTRL | R/W | Control register |
+| 0x04 | SDCARD_STATUS | R | Status register |
+| 0x08 | SDCARD_CMD | R/W | Command register |
+| 0x0C | SDCARD_ARG | R/W | Command argument |
+| 0x10 | SDCARD_RESP[0] | R | Response register 0 |
+| 0x14 | SDCARD_RESP[1] | R | Response register 1 |
+| 0x18 | SDCARD_RESP[2] | R | Response register 2 |
+| 0x1C | SDCARD_RESP[3] | R | Response register 3 |
+| 0x20 | SDCARD_DATA | R/W | Data register |
+| 0x24 | SDCARD_BLK_CNT | R/W | Block count register |
+| 0x28 | SDCARD_BLK_SIZE | R/W | Block size register |
+| 0x2C | SDCARD_TIMEOUT | R/W | Timeout register |
+| 0x30 | SDCARD_CLK_DIV | R/W | Clock divider register |
+| 0x34 | SDCARD_INT_EN | R/W | Interrupt enable register |
+| 0x38 | SDCARD_INT_STAT | R/W | Interrupt status register |
+| 0x3C | SDCARD_DMA_CTRL | R/W | DMA control register |
+| 0x40 | SDCARD_PWR_CTRL | R/W | Power control register |
+| 0x44 | SDCARD_SEC_CTRL | R/W | Security control register |
+| 0x48 | SDCARD_DEBUG_CTRL | R/W | Debug control register |
+| 0x4C | SDCARD_TEST_CTRL | R/W | Test control register |
+| 0x50 | SDCARD_ERROR_CTRL | R/W | Error control register |
+| 0x54 | SDCARD_PERF_CTRL | R/W | Performance control register |
+| 0x58 | SDCARD_CAL_CTRL | R/W | Calibration control register |
+| 0x5C | SDCARD_VERSION | R | Version register |
 
 ### Register Bit Definitions
 
@@ -608,17 +608,17 @@ Debug Interface Signals:
 ```
 tb/
 ├── cocotb/
-│   ├── test_sd_controller.py
-│   ├── test_sd_protocol.py
-│   ├── test_sd_performance.py
-│   ├── test_sd_security.py
-│   └── test_sd_reliability.py
+│   ├── test_sdcard_controller.py
+│   ├── test_sdcard_protocol.py
+│   ├── test_sdcard_performance.py
+│   ├── test_sdcard_security.py
+│   └── test_sdcard_reliability.py
 ├── sv_tb/
-│   ├── tb_sd_controller.sv
-│   ├── sd_card_model.sv
-│   ├── sd_protocol_checker.sv
-│   ├── sd_security_checker.sv
-│   └── sd_reliability_checker.sv
+│   ├── tb_sdcard_controller.sv
+│   ├── sdcard_card_model.sv
+│   ├── sdcard_protocol_checker.sv
+│   ├── sdcard_security_checker.sv
+│   └── sdcard_reliability_checker.sv
 └── Makefile
 ```
 
@@ -634,21 +634,22 @@ tb/
 
 ### Module Hierarchy
 ```
-sd_card_controller (top)
-├── sd_apb_interface
-├── sd_command_engine
-├── sd_data_engine
-├── sd_clk_gen
-├── sd_fifo
-├── sd_crc_gen
-├── sd_dma_controller
-├── sd_power_controller
-├── sd_security_controller
-├── sd_debug_controller
-├── sd_test_controller
-├── sd_error_controller
-├── sd_performance_controller
-└── sd_calibration_controller
+sdcard_controller (top)
+├── sdcard_apb_interface
+├── sdcard_command_engine
+├── sdcard_data_engine
+├── sdcard_clock_generator
+├── sdcard_register_file
+├── sdcard_dma_controller
+├── sdcard_power_controller
+├── sdcard_security_controller
+├── sdcard_debug_controller
+├── sdcard_test_controller
+├── sdcard_error_controller
+├── sdcard_performance_controller
+├── sdcard_calibration_controller
+├── sdcard_interrupt_controller
+└── sdcard_interface
 ```
 
 ### Key Modules
@@ -702,7 +703,7 @@ sd_card_controller (top)
 ```json
 {
   "PDK": "sky130B",
-  "DESIGN_NAME": "sd_card_controller",
+  "DESIGN_NAME": "sdcard_controller",
   "VERILOG_FILES": "rtl/*.sv",
   "CLOCK_PORT": "PCLK_i",
   "CLOCK_PERIOD": 20,
@@ -810,7 +811,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 ### Configuration Examples
 ```verilog
 // Basic SD Card Controller instantiation
-sd_card_controller sd_ctrl (
+sdcard_controller sdcard_ctrl (
     .PCLK_i(clk),
     .PRESETn_i(rst_n),
     .PSEL_i(psel),

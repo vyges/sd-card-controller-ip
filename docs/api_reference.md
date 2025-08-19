@@ -75,59 +75,59 @@
 
 ```c
 // Initialize SD Card Controller
-int sd_init(void);
+int sdcard_init(void);
 
 // Configure clock settings
-int sd_config_clock(uint32_t freq, uint32_t div);
+int sdcard_config_clock(uint32_t freq, uint32_t div);
 
 // Send SD command
-int sd_send_command(uint8_t cmd, uint32_t arg, uint32_t *resp);
+int sdcard_send_command(uint8_t cmd, uint32_t arg, uint32_t *resp);
 
 // Read data block
-int sd_read_block(uint32_t addr, uint8_t *data, uint32_t len);
+int sdcard_read_block(uint32_t addr, uint8_t *data, uint32_t len);
 
 // Write data block
-int sd_write_block(uint32_t addr, uint8_t *data, uint32_t len);
+int sdcard_write_block(uint32_t addr, uint8_t *data, uint32_t len);
 
 // Configure DMA
-int sd_config_dma(uint32_t addr, uint32_t len);
+int sdcard_config_dma(uint32_t addr, uint32_t len);
 
 // Enable interrupts
-int sd_enable_interrupts(uint32_t mask);
+int sdcard_enable_interrupts(uint32_t mask);
 
 // Get status
-int sd_get_status(uint32_t *status);
+int sdcard_get_status(uint32_t *status);
 
 // Configure security
-int sd_config_security(uint32_t key, uint32_t mode);
+int sdcard_config_security(uint32_t key, uint32_t mode);
 
 // Enable debug
-int sd_enable_debug(uint32_t mode);
+int sdcard_enable_debug(uint32_t mode);
 
 // Get performance counters
-int sd_get_performance(uint32_t *counters);
+int sdcard_get_performance(uint32_t *counters);
 ```
 
 ### Error Codes
 
 | Code | Name | Description |
 |------|------|-------------|
-| 0 | SD_OK | Success |
-| -1 | SD_ERR_TIMEOUT | Command timeout |
-| -2 | SD_ERR_CRC | CRC error |
-| -3 | SD_ERR_CARD | Card error |
-| -4 | SD_ERR_PARAM | Invalid parameter |
-| -5 | SD_ERR_BUSY | Device busy |
-| -6 | SD_ERR_SECURITY | Security error |
-| -7 | SD_ERR_DMA | DMA error |
-| -8 | SD_ERR_POWER | Power error |
+| 0 | SDCARD_OK | Success |
+| -1 | SDCARD_ERR_TIMEOUT | Command timeout |
+| -2 | SDCARD_ERR_CRC | CRC error |
+| -3 | SDCARD_ERR_CARD | Card error |
+| -4 | SDCARD_ERR_PARAM | Invalid parameter |
+| -5 | SDCARD_ERR_BUSY | Device busy |
+| -6 | SDCARD_ERR_SECURITY | Security error |
+| -7 | SDCARD_ERR_DMA | DMA error |
+| -8 | SDCARD_ERR_POWER | Power error |
 
 ### Interrupt Handling
 
 ```c
 // Interrupt handler
-void sd_interrupt_handler(void) {
-    uint32_t status = sd_read_reg(INT_STAT);
+void sdcard_interrupt_handler(void) {
+    uint32_t status = sdcard_read_reg(INT_STAT);
     
     if (status & INT_CMD_DONE) {
         // Command completed
@@ -142,7 +142,7 @@ void sd_interrupt_handler(void) {
     }
     
     // Clear interrupts
-    sd_write_reg(INT_CLR, status);
+    sdcard_write_reg(INT_CLR, status);
 }
 ```
 
