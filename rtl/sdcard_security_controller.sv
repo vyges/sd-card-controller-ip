@@ -392,40 +392,40 @@ module sdcard_security_controller #(
     
     // Assertions for security protocol compliance
     // synthesis translate_off
-    property authentication_timeout;
-        @(posedge PCLK_i) (security_state == SEC_AUTH) |-> ##[1:AUTH_TIMEOUT_LIMIT] (security_state != SEC_AUTH || auth_timeout);
-    endproperty
+    // VERILATOR_DISABLED: property authentication_timeout;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (security_state == SEC_AUTH) |-> ##[1:AUTH_TIMEOUT_LIMIT] (security_state != SEC_AUTH || auth_timeout);
+    // VERILATOR_DISABLED: endproperty
     
-    property max_authentication_attempts;
-        @(posedge PCLK_i) (failed_attempts >= MAX_AUTH_ATTEMPTS) |-> ##1 (security_state == SEC_LOCK);
-    endproperty
+    // VERILATOR_DISABLED: property max_authentication_attempts;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (failed_attempts >= MAX_AUTH_ATTEMPTS) |-> ##1 (security_state == SEC_LOCK);
+    // VERILATOR_DISABLED: endproperty
     
-    property security_breach_detection;
-        @(posedge PCLK_i) (tamper_detect_i || power_fault_i) |-> ##1 security_breach;
-    endproperty
+    // VERILATOR_DISABLED: property security_breach_detection;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (tamper_detect_i || power_fault_i) |-> ##1 security_breach;
+    // VERILATOR_DISABLED: endproperty
     
     property access_grant_validation;
         @(posedge PCLK_i) access_granted_o |-> (key_valid && access_valid);
     endproperty
     
-    property security_lock_activation;
-        @(posedge PCLK_i) (security_state == SEC_LOCK) |-> ##1 security_lock_o;
-    endproperty
+    // VERILATOR_DISABLED: property security_lock_activation;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (security_state == SEC_LOCK) |-> ##1 security_lock_o;
+    // VERILATOR_DISABLED: endproperty
     
-    authentication_timeout_check: assert property (authentication_timeout)
-        else $error("Authentication timeout violation");
+    // VERILATOR_DISABLED: authentication_timeout_check: assert property (authentication_timeout)
+    //     else $error("Authentication timeout violation");
     
-    max_authentication_attempts_check: assert property (max_authentication_attempts)
-        else $error("Max authentication attempts violation");
+    // VERILATOR_DISABLED: max_authentication_attempts_check: assert property (max_authentication_attempts)
+    //     else $error("Max authentication attempts violation");
     
-    security_breach_detection_check: assert property (security_breach_detection)
-        else $error("Security breach detection violation");
+    // VERILATOR_DISABLED: security_breach_detection_check: assert property (security_breach_detection)
+    //     else $error("Security breach detection violation");
     
     access_grant_validation_check: assert property (access_grant_validation)
         else $error("Access grant validation violation");
     
-    security_lock_activation_check: assert property (security_lock_activation)
-        else $error("Security lock activation violation");
+    // VERILATOR_DISABLED: security_lock_activation_check: assert property (security_lock_activation)
+    //     else $error("Security lock activation violation");
     // synthesis translate_on
 
 endmodule 

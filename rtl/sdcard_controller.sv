@@ -287,7 +287,7 @@ module sdcard_controller #(
     // Data Engine Module
     sdcard_data_engine #(
         .SDCARD_DATA_WIDTH(SDCARD_DATA_WIDTH),
-        .SDCARD_FIFO_DEPTH(SDCARD_FIFO_DEPTH)
+        .FIFO_DEPTH(SDCARD_FIFO_DEPTH)
     ) data_engine (
         .PCLK_i(PCLK_i),
         .PRESETn_i(PRESETn_i),

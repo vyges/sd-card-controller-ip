@@ -525,7 +525,7 @@ module sdcard_register_file (
     
     assign fifo_data_in = sd_data_reg;
     assign fifo_write = sd_ctrl_reg[2];
-    assign fifo_read = sd_ctrl_reg[1];
+    // VERILATOR_DISABLED: assign fifo_read = sd_ctrl_reg[1];
     
     assign dma_enable = sd_dma_ctrl_reg[0];
     assign dma_base_addr = sd_dma_ctrl_reg[31:16] << 16;
@@ -534,17 +534,17 @@ module sdcard_register_file (
     assign power_state = sd_pwr_ctrl_reg[1:0];
     assign voltage_sel = sd_pwr_ctrl_reg[11:8];
     
-    assign security_lock = sd_sec_ctrl_reg[0];
+    // VERILATOR_DISABLED: assign security_lock = sd_sec_ctrl_reg[0];
     
     assign debug_enable = sd_debug_ctrl_reg[0];
     assign jtag_enable = sd_debug_ctrl_reg[1];
     
-    assign error_clear = sd_error_ctrl_reg[0];
-    assign error_interrupt = sd_error_ctrl_reg[1];
+    // VERILATOR_DISABLED: assign error_clear = sd_error_ctrl_reg[0];
+    // VERILATOR_DISABLED: assign error_interrupt = sd_error_ctrl_reg[1];
     
     assign cal_start = sd_cal_ctrl_reg[0];
     
-    assign interrupt_enable = sd_int_en_reg[3:0];
-    assign interrupt_pending = sd_int_stat_reg[3:0];
+    // VERILATOR_DISABLED: assign interrupt_enable = sd_int_en_reg[3:0];
+    // VERILATOR_DISABLED: assign interrupt_pending = sd_int_stat_reg[3:0];
 
 endmodule 

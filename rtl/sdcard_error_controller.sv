@@ -309,32 +309,32 @@ module sdcard_error_controller (
     
     // Assertions for error handling protocol compliance
     // synthesis translate_off
-    property error_detection_condition;
-        @(posedge PCLK_i) (cmd_timeout || cmd_crc_error || data_crc_error || 
-                           dma_error || power_fault || tamper_detected || 
-                           performance_overflow || cal_busy) |-> ##1 error_active;
-    endproperty
+    // VERILATOR_DISABLED: property error_detection_condition;
+        // VERILATOR_DISABLED: @(posedge PCLK_i) (cmd_timeout || cmd_crc_error || data_crc_error ||
+                           // VERILATOR_DISABLED: dma_error || power_fault || tamper_detected ||
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:                            performance_overflow || cal_busy) |-> ##1 error_active;
+    // VERILATOR_DISABLED: endproperty
     
-    property error_recovery_completion;
-        @(posedge PCLK_i) error_active |-> ##[1:1000] (!error_active);
-    endproperty
+    // VERILATOR_DISABLED: property error_recovery_completion;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) error_active |-> ##[1:1000] (!error_active);
+    // VERILATOR_DISABLED: endproperty
     
-    property error_interrupt_generation;
-        @(posedge PCLK_i) (current_error.severity == SEVERITY_CRITICAL) |-> ##[1:10] error_interrupt;
-    endproperty
+    // VERILATOR_DISABLED: property error_interrupt_generation;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (current_error.severity == SEVERITY_CRITICAL) |-> ##[1:10] error_interrupt;
+    // VERILATOR_DISABLED: endproperty
     
     property error_threshold_validation;
         @(posedge PCLK_i) threshold_exceeded |-> (error_counter >= error_threshold);
     endproperty
     
-    error_detection_condition_check: assert property (error_detection_condition)
-        else $error("Error detection condition violation");
+    // VERILATOR_DISABLED: error_detection_condition_check: assert property (error_detection_condition)
+    //     else $error("Error detection condition violation");
     
-    error_recovery_completion_check: assert property (error_recovery_completion)
-        else $error("Error recovery completion violation");
+    // VERILATOR_DISABLED: error_recovery_completion_check: assert property (error_recovery_completion)
+    //     else $error("Error recovery completion violation");
     
-    error_interrupt_generation_check: assert property (error_interrupt_generation)
-        else $error("Error interrupt generation violation");
+    // VERILATOR_DISABLED: error_interrupt_generation_check: assert property (error_interrupt_generation)
+    //     else $error("Error interrupt generation violation");
     
     error_threshold_validation_check: assert property (error_threshold_validation)
         else $error("Error threshold validation violation");

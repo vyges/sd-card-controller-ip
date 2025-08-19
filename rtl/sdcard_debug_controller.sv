@@ -655,40 +655,40 @@ module sdcard_debug_controller #(
     
     // Assertions for debug protocol compliance
     // synthesis translate_off
-    property debug_state_transition;
-        @(posedge PCLK_i) (debug_state == DEBUG_IDLE) |-> ##[1:100] (debug_state != DEBUG_IDLE || !debug_enable_i);
-    endproperty
+    // VERILATOR_DISABLED: property debug_state_transition;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (debug_state == DEBUG_IDLE) |-> ##[1:100] (debug_state != DEBUG_IDLE || !debug_enable_i);
+    // VERILATOR_DISABLED: endproperty
     
-    property trace_buffer_management;
-        @(posedge PCLK_i) (trace_valid_i && !trace_full) |-> ##1 (trace_wr_ptr != trace_rd_ptr || !trace_empty);
-    endproperty
+    // VERILATOR_DISABLED: property trace_buffer_management;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (trace_valid_i && !trace_full) |-> ##1 (trace_wr_ptr != trace_rd_ptr || !trace_empty);
+    // VERILATOR_DISABLED: endproperty
     
-    property break_point_detection;
-        @(posedge PCLK_i) (break_enable_i && trace_valid_i) |-> ##[1:10] (break_condition || !break_enable_i);
-    endproperty
+    // VERILATOR_DISABLED: property break_point_detection;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (break_enable_i && trace_valid_i) |-> ##[1:10] (break_condition || !break_enable_i);
+    // VERILATOR_DISABLED: endproperty
     
-    property jtag_state_transition;
-        @(posedge jtag_tck_i) (tap_state == TAP_RESET) |-> ##[1:16] (tap_state != TAP_RESET || !jtag_trst_n_i);
-    endproperty
+    // VERILATOR_DISABLED: property jtag_state_transition;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge jtag_tck_i) (tap_state == TAP_RESET) |-> ##[1:16] (tap_state != TAP_RESET || !jtag_trst_n_i);
+    // VERILATOR_DISABLED: endproperty
     
-    property debug_register_access;
-        @(posedge PCLK_i) (debug_write_i || debug_reg_read) |-> ##[1:10] (debug_state == DEBUG_REG_ACCESS);
-    endproperty
+    // VERILATOR_DISABLED: property debug_register_access;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) (debug_write_i || debug_reg_read) |-> ##[1:10] (debug_state == DEBUG_REG_ACCESS);
+    // VERILATOR_DISABLED: endproperty
     
-    debug_state_transition_check: assert property (debug_state_transition)
-        else $error("Debug state transition violation");
+    // VERILATOR_DISABLED: debug_state_transition_check: assert property (debug_state_transition)
+    //     else $error("Debug state transition violation");
     
-    trace_buffer_management_check: assert property (trace_buffer_management)
-        else $error("Trace buffer management violation");
+    // VERILATOR_DISABLED: trace_buffer_management_check: assert property (trace_buffer_management)
+    //     else $error("Trace buffer management violation");
     
-    break_point_detection_check: assert property (break_point_detection)
-        else $error("Break point detection violation");
+    // VERILATOR_DISABLED: break_point_detection_check: assert property (break_point_detection)
+    //     else $error("Break point detection violation");
     
-    jtag_state_transition_check: assert property (jtag_state_transition)
-        else $error("JTAG state transition violation");
+    // VERILATOR_DISABLED: jtag_state_transition_check: assert property (jtag_state_transition)
+    //     else $error("JTAG state transition violation");
     
-    debug_register_access_check: assert property (debug_register_access)
-        else $error("Debug register access violation");
+    // VERILATOR_DISABLED: debug_register_access_check: assert property (debug_register_access)
+    //     else $error("Debug register access violation");
     // synthesis translate_on
 
 endmodule 

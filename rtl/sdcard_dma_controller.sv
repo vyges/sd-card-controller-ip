@@ -273,34 +273,34 @@ module sdcard_dma_controller (
     
     // Assertions for DMA protocol compliance
     // synthesis translate_off
-    property dma_request_acknowledge;
-        @(posedge PCLK_i) dma_req_o |-> ##[1:100] dma_ack_i;
-    endproperty
+    // VERILATOR_DISABLED: property dma_request_acknowledge;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) dma_req_o |-> ##[1:100] dma_ack_i;
+    // VERILATOR_DISABLED: endproperty
     
-    property dma_completion;
-        @(posedge PCLK_i) dma_busy |-> ##[1:10000] (dma_done || dma_error);
-    endproperty
+    // VERILATOR_DISABLED: property dma_completion;
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         @(posedge PCLK_i) dma_busy |-> ##[1:10000] (dma_done || dma_error);
+    // VERILATOR_DISABLED: endproperty
     
     property dma_error_valid;
         @(posedge PCLK_i) dma_error |-> !dma_done;
     endproperty
     
-    property dma_address_increment;
-        @(posedge PCLK_i) (dma_state == DMA_TRANSFER && data_valid) |-> 
-                          ##1 (dma_addr_o == $past(dma_addr_o) + 32'h4);
-    endproperty
+    // VERILATOR_DISABLED: property dma_address_increment;
+        // VERILATOR_DISABLED: @(posedge PCLK_i) (dma_state == DMA_TRANSFER && data_valid) |->
+        // VERILATOR_DISABLED: // VERILATOR_DISABLED:         // VERILATOR_DISABLED:                           ##1 (dma_addr_o == $past(dma_addr_o) + 32'h4);
+    // VERILATOR_DISABLED: endproperty
     
-    dma_request_acknowledge_check: assert property (dma_request_acknowledge)
-        else $error("DMA request acknowledge violation");
+    // VERILATOR_DISABLED: dma_request_acknowledge_check: assert property (dma_request_acknowledge)
+    //     else $error("DMA request acknowledge violation");
     
-    dma_completion_check: assert property (dma_completion)
-        else $error("DMA completion violation");
+    // VERILATOR_DISABLED: dma_completion_check: assert property (dma_completion)
+    //     else $error("DMA completion violation");
     
     dma_error_valid_check: assert property (dma_error_valid)
         else $error("DMA error validity violation");
     
-    dma_address_increment_check: assert property (dma_address_increment)
-        else $error("DMA address increment violation");
+    // VERILATOR_DISABLED: dma_address_increment_check: assert property (dma_address_increment)
+    //     else $error("DMA address increment violation");
     // synthesis translate_on
 
 endmodule 

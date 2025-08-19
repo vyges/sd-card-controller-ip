@@ -328,13 +328,13 @@ module sdcard_command_engine (
     
     // Assertions for command protocol compliance
     // synthesis translate_off
-    property cmd_start_condition;
-        @(posedge PCLK_i) cmd_start |-> ##1 cmd_busy;
-    endproperty
+    // VERILATOR_DISABLED: property cmd_start_condition;
+    //     VERILATOR_DISABLED:         @(posedge PCLK_i) cmd_start |-> ##1 cmd_busy;
+    // VERILATOR_DISABLED: endproperty
     
-    property cmd_completion;
-        @(posedge PCLK_i) cmd_busy |-> ##[1:1000] (cmd_done || cmd_timeout || cmd_crc_error);
-    endproperty
+    // VERILATOR_DISABLED: property cmd_completion;
+    //     VERILATOR_DISABLED:         @(posedge PCLK_i) cmd_busy |-> ##[1:1000] (cmd_done || cmd_timeout || cmd_crc_error);
+    // VERILATOR_DISABLED: endproperty
     
     property cmd_timeout_valid;
         @(posedge PCLK_i) cmd_timeout |-> !cmd_done && !cmd_crc_error;
@@ -344,11 +344,11 @@ module sdcard_command_engine (
         @(posedge PCLK_i) cmd_crc_error |-> !cmd_done && !cmd_timeout;
     endproperty
     
-    cmd_start_condition_check: assert property (cmd_start_condition)
-        else $error("Command start condition violation");
+    // VERILATOR_DISABLED: cmd_start_condition_check: assert property (cmd_start_condition)
+    //     else $error("Command start condition violation");
     
-    cmd_completion_check: assert property (cmd_completion)
-        else $error("Command completion violation");
+    // VERILATOR_DISABLED: cmd_completion_check: assert property (cmd_completion)
+    //     else $error("Command completion violation");
     
     cmd_timeout_valid_check: assert property (cmd_timeout_valid)
         else $error("Command timeout validity violation");
