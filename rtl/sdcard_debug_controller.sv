@@ -644,14 +644,14 @@ module sdcard_debug_controller #(
     assign jtag_tdo_o = (tap_state == TAP_DR_SHIFT || tap_state == TAP_IR_SHIFT) ? 
                         jtag_shift_data[0] : 1'b0;
     
-    // Trace output interface
-    assign trace_ready_o = !trace_full;
+    // Trace output interface - handled in always_ff blocks
+    // assign trace_ready_o = !trace_full;
     
-    // Performance output interface
-    assign perf_ready_o = !perf_full;
+    // Performance output interface - handled in always_ff blocks
+    // assign perf_ready_o = !perf_full;
     
-    // Error injection output interface
-    assign error_ready_o = !error_inject_active;
+    // Error injection output interface - handled in always_ff blocks
+    // assign error_ready_o = !error_inject_active;
     
     // Assertions for debug protocol compliance
     // synthesis translate_off
