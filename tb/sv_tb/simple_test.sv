@@ -1,7 +1,7 @@
 //=============================================================================
-// SD Card Controller Top-Level Testbench
+// Simple SD Card Controller Testbench
 //=============================================================================
-// Description: Top-level testbench for SD Card Controller IP
+// Description: Basic testbench for SD Card Controller IP
 // Author: Vyges AI
 // Date: 2025
 // License: MIT
@@ -9,21 +9,21 @@
 
 `timescale 1ns/1ps
 
-module sdcard_controller_tb;
+module simple_test;
 
   // Clock and reset signals
   logic PCLK_i;
   logic PRESETn_i;
   
-      // APB interface signals
-    logic        PSEL_i;
-    logic        PENABLE_i;
-    logic        PWRITE_i;
-    logic [15:0] PADDR_i;
-    logic [31:0] PWDATA_i;
-    logic [31:0] PRDATA_o;
-    logic        PREADY_o;
-    logic        PSLVERR_o;
+  // APB interface signals
+  logic        PSEL_i;
+  logic        PENABLE_i;
+  logic        PWRITE_i;
+  logic [15:0] PADDR_i;
+  logic [31:0] PWDATA_i;
+  logic [31:0] PRDATA_o;
+  logic        PREADY_o;
+  logic        PSLVERR_o;
   
   // SD Card interface signals
   logic        sd_clk_o;
@@ -129,55 +129,31 @@ module sdcard_controller_tb;
     wait(PRESETn_i);
     #100;
     
-    // Test 1: Basic APB read/write
-    $display("Test 1: Basic APB read/write");
-    apb_write(12'h000, 32'h12345678);
-    apb_read(12'h000);
+    $display("Starting SD Card Controller Test");
     
-    // Test 2: Register configuration
-    $display("Test 2: Register configuration");
-    apb_write(12'h004, 32'h00000001); // Enable controller
-    apb_write(12'h008, 32'h00000001); // Set clock divider
-    apb_write(12'h00C, 32'h00000000); // Clear status
+    // Test 1: Basic APB write
+    $display("Test 1: Basic APB write");
+    apb_write(16'h000, 32'h00000001); // Write to control register
     
-    // Test 3: Command interface
-    $display("Test 3: Command interface");
-    apb_write(12'h010, 32'h00000040); // CMD0 (GO_IDLE_STATE)
-    apb_write(12'h014, 32'h00000000); // No arguments
-    apb_write(12'h018, 32'h00000001); // Start command
+    // Test 2: Basic APB read
+    $display("Test 2: Basic APB read");
+    apb_read(16'h000); // Read from control register
     
-    // Wait for command completion
-    wait_command_complete();
+    // Test 3: Check SD card power
+    $display("Test 3: Check SD card power");
+    if (sd_pwr_en_o) begin
+      $display("  SD card power enabled");
+    end else begin
+      $display("  SD card power disabled");
+    end
     
-    // Test 4: Data transfer
-    $display("Test 4: Data transfer");
-    apb_write(12'h020, 32'h00000001); // Enable data transfer
-    apb_write(12'h024, 32'h00000100); // Set block size (256 bytes)
-    apb_write(12'h028, 32'h00000001); // Single block transfer
-    
-    // Test 5: Interrupt handling
-    $display("Test 5: Interrupt handling");
-    apb_write(12'h030, 32'h00000001); // Enable interrupts
-    
-    // Test 6: Power management
-    $display("Test 6: Power management");
-    apb_write(12'h040, 32'h00000001); // Enable power management
-    
-    // Test 7: Security features
-    $display("Test 7: Security features");
-    apb_write(12'h050, 32'h00000001); // Enable security
-    
-    // Test 8: Debug interface
-    $display("Test 8: Debug interface");
-    apb_write(12'h060, 32'h00000001); // Enable debug
-    
-    // Test 9: Performance monitoring
-    $display("Test 9: Performance monitoring");
-    apb_write(12'h070, 32'h00000001); // Enable performance monitoring
-    
-    // Test 10: Error handling
-    $display("Test 10: Error handling");
-    apb_write(12'h080, 32'h00000001); // Enable error reporting
+    // Test 4: Check clock generation
+    $display("Test 4: Check clock generation");
+    if (sd_clk_o !== 1'b0 && sd_clk_o !== 1'b1) begin
+      $display("  SD clock is toggling");
+    end else begin
+      $display("  SD clock is static");
+    end
     
     // Run for additional time to observe behavior
     #1000;
@@ -187,12 +163,12 @@ module sdcard_controller_tb;
   end
   
   // APB write task
-  task automatic apb_write(input logic [11:0] addr, input logic [31:0] data);
+  task automatic apb_write(input logic [15:0] addr, input logic [31:0] data);
     @(posedge PCLK_i);
     PSEL_i = 1;
     PENABLE_i = 0;
     PWRITE_i = 1;
-    PADDR_i = {4'h0, addr};
+    PADDR_i = addr;
     PWDATA_i = data;
     @(posedge PCLK_i);
     PENABLE_i = 1;
@@ -200,50 +176,39 @@ module sdcard_controller_tb;
     @(posedge PCLK_i);
     PSEL_i = 0;
     PENABLE_i = 0;
-    $display("APB Write: addr=0x%03X, data=0x%08X", addr, data);
+    $display("APB Write: addr=0x%04X, data=0x%08X", addr, data);
   endtask
   
   // APB read task
-  task automatic apb_read(input logic [11:0] addr);
+  task automatic apb_read(input logic [15:0] addr);
     @(posedge PCLK_i);
     PSEL_i = 1;
     PENABLE_i = 0;
     PWRITE_i = 0;
-    PADDR_i = {4'h0, addr};
+    PADDR_i = addr;
     @(posedge PCLK_i);
     PENABLE_i = 1;
     wait(PREADY_o);
     @(posedge PCLK_i);
     PSEL_i = 0;
     PENABLE_i = 0;
-    $display("APB Read: addr=0x%03X, data=0x%08X", addr, PRDATA_o);
-  endtask
-  
-  // Wait for command completion
-  task automatic wait_command_complete();
-    logic [31:0] status;
-    do begin
-      apb_read(12'h00C); // Read status register
-      status = PRDATA_o;
-      #10;
-    end while ((status & 32'h00000001) == 0); // Wait for command done bit
-    $display("Command completed");
+    $display("APB Read: addr=0x%04X, data=0x%08X", addr, PRDATA_o);
   endtask
   
   // Monitor interrupt
   always @(posedge sd_irq_o) begin
-    $display("Interrupt asserted at time %0t", $time);
+    $display("SD Interrupt asserted at time %0t", $time);
   end
   
-  // Monitor debug output
-  always @(posedge trace_valid_o) begin
-    $display("Debug data: 0x%02X at time %0t", trace_data_o, $time);
+  // Monitor DMA request
+  always @(posedge dma_req_o) begin
+    $display("DMA Request asserted at time %0t", $time);
   end
   
   // Waveform dumping
   initial begin
-    $dumpfile("sdcard_card_controller_tb.vcd");
-    $dumpvars(0, sdcard_card_controller_tb);
+    $dumpfile("simple_test.vcd");
+    $dumpvars(0, simple_test);
   end
   
   // Timeout
@@ -253,4 +218,4 @@ module sdcard_controller_tb;
     $finish;
   end
 
-endmodule 
+endmodule

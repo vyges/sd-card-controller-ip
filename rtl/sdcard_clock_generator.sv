@@ -216,9 +216,9 @@ module sdcard_clock_generator (
                                     cal_attempts <= cal_attempts + 8'h1;
                                     // Adjust divider based on attempt
                                     if (cal_attempts[0]) begin
-                                        divider_counter <= clk_divider + cal_attempts;
+                                        divider_counter <= clk_divider + {8'h0, cal_attempts};
                                     end else begin
-                                        divider_counter <= clk_divider - cal_attempts;
+                                        divider_counter <= clk_divider - {8'h0, cal_attempts};
                                     end
                                 end else begin
                                     cal_failed <= 1'b1;

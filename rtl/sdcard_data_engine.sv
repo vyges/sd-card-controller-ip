@@ -140,7 +140,7 @@ module sdcard_data_engine #(
             end
             
             DATA_TX_BLOCK: begin
-                if (byte_counter >= block_size) begin
+                if ({2'b00, byte_counter} >= block_size) begin
                     data_next_state = DATA_TX_CRC;
                 end
             end
@@ -164,7 +164,7 @@ module sdcard_data_engine #(
             end
             
             DATA_RX_BLOCK: begin
-                if (byte_counter >= block_size) begin
+                if ({2'b00, byte_counter} >= block_size) begin
                     data_next_state = DATA_RX_CRC;
                 end
             end
@@ -284,7 +284,7 @@ module sdcard_data_engine #(
                 
                 DATA_TX_BLOCK: begin
                     // Transmit data bytes
-                    if (byte_counter < block_size) begin
+                    if ({2'b00, byte_counter} < block_size) begin
                         case (SDCARD_DATA_WIDTH)
                             1: begin
                                 data_out_bits[0] <= tx_data[31 - byte_counter];
@@ -293,7 +293,7 @@ module sdcard_data_engine #(
                                 data_out_bits <= tx_data[31 - byte_counter*4 -: 4];
                             end
                             8: begin
-                                data_out_bits <= tx_data[31 - byte_counter*8 -: 8];
+                                data_out_bits <= tx_data[31 - byte_counter*8 -: 4];
                             end
                             default: begin
                                 data_out_bits <= tx_data[31 - byte_counter*4 -: 4];
@@ -308,7 +308,7 @@ module sdcard_data_engine #(
                 
                 DATA_TX_CRC: begin
                     // Transmit CRC
-                    data_out_bits <= tx_crc[15 - bit_counter];
+                    data_out_bits <= {tx_crc[15 - bit_counter], 3'h0};
                     bit_counter <= bit_counter + 8'h1;
                 end
                 
@@ -325,7 +325,7 @@ module sdcard_data_engine #(
                 
                 DATA_RX_BLOCK: begin
                     // Receive data bytes
-                    if (byte_counter < block_size) begin
+                    if ({2'b00, byte_counter} < block_size) begin
                         case (SDCARD_DATA_WIDTH)
                             1: begin
                                 rx_data[31 - byte_counter] <= data_in_bits[0];
@@ -333,9 +333,9 @@ module sdcard_data_engine #(
                             4: begin
                                 rx_data[31 - byte_counter*4 -: 4] <= data_in_bits;
                             end
-                            8: begin
-                                rx_data[31 - byte_counter*8 -: 8] <= data_in_bits;
-                            end
+                                                            8: begin
+                                    rx_data[31 - byte_counter*8 -: 4] <= data_in_bits;
+                                end
                             default: begin
                                 rx_data[31 - byte_counter*4 -: 4] <= data_in_bits;
                             end

@@ -268,7 +268,8 @@ module sdcard_error_controller (
                 
                 ERROR_REPORT: begin
                     // Generate error interrupt
-                    if (error_enable[current_error.error_code] && !current_error.reported) begin
+                    // truncated the index to 8 bits
+                    if (error_enable[current_error.error_code[3:0]] && !current_error.reported) begin
                         error_interrupt <= 1'b1;
                         current_error.reported <= 1'b1;
                     end

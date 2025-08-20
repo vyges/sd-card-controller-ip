@@ -106,7 +106,9 @@ module sdcard_command_engine (
             1'b0,                   // Start bit
             cmd_index,              // Command index (6 bits)
             cmd_argument,           // Argument (32 bits)
-            cmd_crc                 // CRC (7 bits)
+            cmd_crc,                // CRC (7 bits)
+            1'b0,                   // End bit
+            1'b0                    // Padding bit
         };
     end
     
@@ -127,7 +129,7 @@ module sdcard_command_engine (
     
     // CRC7 calculation
     always_comb begin
-        cmd_crc = calc_crc7({cmd_index, cmd_argument}, 7'h09);
+        cmd_crc = calc_crc7({cmd_index, cmd_argument, 10'h0}, 7'h09);
     end
     
     // Command state machine
@@ -286,8 +288,8 @@ module sdcard_command_engine (
                 
                 CMD_CHECK_CRC: begin
                     resp_crc <= resp_data[6:0];
-                    calc_crc <= calc_crc7(resp_data[39:7], 7'h09);
-                    crc_valid <= (calc_crc7(resp_data[39:7], 7'h09) == resp_data[6:0]);
+                    calc_crc <= calc_crc7({resp_data[39:7], 15'h0}, 7'h09);
+                    crc_valid <= (calc_crc7({resp_data[39:7], 15'h0}, 7'h09) == resp_data[6:0]);
                 end
                 
                 CMD_COMPLETE: begin

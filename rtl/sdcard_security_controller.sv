@@ -90,8 +90,8 @@ module sdcard_security_controller #(
     logic                          recovery_mode;     // Recovery mode active
     
     // Security constants
-    localparam [15:0] AUTH_TIMEOUT_LIMIT = SDCARD_AUTH_TIMEOUT;
-    localparam [7:0] MAX_AUTH_ATTEMPTS = SDCARD_MAX_ATTEMPTS;
+    localparam [15:0] AUTH_TIMEOUT_LIMIT = SDCARD_AUTH_TIMEOUT[15:0];
+    localparam [7:0] MAX_AUTH_ATTEMPTS = SDCARD_MAX_ATTEMPTS[7:0];
     localparam [7:0] BREACH_LEVEL_LOW = 8'h01;
     localparam [7:0] BREACH_LEVEL_MED = 8'h02;
     localparam [7:0] BREACH_LEVEL_HIGH = 8'h03;
@@ -372,20 +372,10 @@ module sdcard_security_controller #(
         if (!PRESETn_i) begin
             // Initialize monitoring
         end else begin
-            // Update security status
+            // Update security status (truncated to 16 bits)
             security_status_o <= {
-                breach_level,
-                failed_attempts,
-                monitor_active,
-                recovery_mode,
-                security_lock_o,
-                access_granted_o,
-                enc_ready_o,
-                auth_valid_o,
-                tamper_detect_i,
-                power_fault_i,
-                clock_glitch_i,
-                reset_attack_i
+                breach_level[7:0],
+                failed_attempts[7:0]
             };
         end
     end

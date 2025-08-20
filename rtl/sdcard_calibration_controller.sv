@@ -152,7 +152,7 @@ module sdcard_calibration_controller (
             end
             
             CAL_ERROR: begin
-                if (cal_attempts < MAX_CAL_ATTEMPTS) begin
+                if ({8'h0, cal_attempts} < MAX_CAL_ATTEMPTS) begin
                     cal_next_state = CAL_INIT;
                 end else begin
                     cal_next_state = CAL_IDLE;
@@ -277,7 +277,7 @@ module sdcard_calibration_controller (
                     cal_failed <= 1'b1;
                     error_clear <= 1'b1;
                     
-                    if (cal_attempts >= MAX_CAL_ATTEMPTS) begin
+                    if ({8'h0, cal_attempts} >= MAX_CAL_ATTEMPTS) begin
                         cal_busy <= 1'b0;
                         clk_calibrated <= 1'b0;
                     end

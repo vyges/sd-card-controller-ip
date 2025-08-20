@@ -114,7 +114,7 @@ module sdcard_dma_controller (
             DMA_TRANSFER: begin
                 if (transfer_complete) begin
                     dma_next_state = DMA_COMPLETE;
-                end else if (burst_active && burst_count >= burst_size) begin
+                end else if (burst_active && burst_count >= {8'h0, burst_size}) begin
                     dma_next_state = DMA_BURST;
                 end else if (transfer_error) begin
                     dma_next_state = DMA_ERROR;
@@ -192,8 +192,8 @@ module sdcard_dma_controller (
                     dma_busy <= 1'b1;
                     dma_req_o <= 1'b1;
                     dma_addr_o <= current_addr;
-                    dma_len_o <= (dma_length - transfer_count < burst_size) ? 
-                                (dma_length - transfer_count) : burst_size;
+                    dma_len_o <= (dma_length - transfer_count < {8'h0, burst_size}) ? 
+                                (dma_length - transfer_count) : {8'h0, burst_size};
                     dma_we_o <= 1'b1; // Write to memory
                     dma_burst_o <= 1'b1;
                     dma_cache_o <= 4'hF; // Cacheable, write-back
@@ -224,7 +224,7 @@ module sdcard_dma_controller (
                     end
                     
                     // Check for burst completion
-                    if (burst_count >= burst_size) begin
+                    if (burst_count >= {8'h0, burst_size}) begin
                         burst_active <= 1'b1;
                     end
                 end
@@ -237,8 +237,8 @@ module sdcard_dma_controller (
                     if (transfer_count < dma_length) begin
                         dma_req_o <= 1'b1;
                         dma_addr_o <= current_addr;
-                        dma_len_o <= (dma_length - transfer_count < burst_size) ? 
-                                    (dma_length - transfer_count) : burst_size;
+                        dma_len_o <= (dma_length - transfer_count < {8'h0, burst_size}) ? 
+                                    (dma_length - transfer_count) : {8'h0, burst_size};
                     end
                 end
                 

@@ -113,7 +113,7 @@ module sdcard_performance_controller (
             
             // FIFO utilization sampling
             if (cycle_counter[3:0] == 4'h0) begin // Sample every 16 cycles
-                fifo_sum <= fifo_sum + fifo_count;
+                fifo_sum <= fifo_sum + {6'h0, fifo_count};
                 fifo_samples <= fifo_samples + 8'h1;
             end
             
@@ -166,7 +166,7 @@ module sdcard_performance_controller (
         
         // Update FIFO utilization (average over samples)
         if (fifo_samples >= 8'h10) begin // At least 16 samples
-            perf_counters_next.fifo_utilization = fifo_sum / fifo_samples;
+            perf_counters_next.fifo_utilization = fifo_sum / {8'h0, fifo_samples};
         end
         
         // Update power transitions
@@ -183,16 +183,10 @@ module sdcard_performance_controller (
         end
     end
     
-    // Performance counters output
+    // Performance counters output (truncated to 32 bits)
     assign performance_counters = {
         perf_counters.cmd_cycles,
-        perf_counters.data_cycles,
-        perf_counters.dma_cycles,
-        perf_counters.idle_cycles,
-        perf_counters.fifo_utilization,
-        perf_counters.power_transitions,
-        perf_counters.error_count,
-        perf_counters.timeout_count
+        perf_counters.data_cycles
     };
     
     // Performance optimization logic

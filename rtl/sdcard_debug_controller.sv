@@ -458,8 +458,8 @@ module sdcard_debug_controller #(
                     debug_ready_o <= 1'b1;
                     
                     // Check for break points
-                    for (int i = 0; i < 8; i = i + 1) begin
-                        if (break_enable[i] && trace_data_i == break_points[i]) begin
+                    for (logic [2:0] i = 0; i < 8; i = i + 1) begin
+                        if (break_enable[i] && trace_data_i == break_points[i][7:0]) begin
                             break_condition <= 1'b1;
                             break_hit_o <= 1'b1;
                         end

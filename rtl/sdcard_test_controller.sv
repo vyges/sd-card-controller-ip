@@ -459,7 +459,7 @@ module sdcard_test_controller #(
                     
                     if (mem_test_counter < 8'hFF) begin
                         mem_test_counter <= mem_test_counter + 8'h1;
-                        mem_test_addr <= mem_test_counter[9:0];
+                        mem_test_addr <= {2'b00, mem_test_counter};
                         mem_test_data <= {24'h0, mem_test_counter};
                         
                         // Memory write/read test

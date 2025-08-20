@@ -146,6 +146,7 @@ module sdcard_controller #(
     logic [7:0]                    trace_data;
     logic                          trace_valid;
     logic                          jtag_enable;
+    logic [31:0]                   debug_trace_data;
     
     // Error signals
     logic [15:0]                   error_status;
@@ -399,8 +400,8 @@ module sdcard_controller #(
     ) security_controller (
         .PCLK_i(PCLK_i),
         .PRESETn_i(PRESETn_i),
-        .auth_key_i(32'h0),           // TODO: Connect to secure key storage
-        .enc_key_i(32'h0),            // TODO: Connect to encryption key
+        .auth_key_i(256'h0),          // TODO: Connect to secure key storage
+        .enc_key_i(256'h0),           // TODO: Connect to encryption key
         .user_id_i(8'h0),             // TODO: Connect to user ID
         .access_level_i(4'h0),        // TODO: Connect to access level
         .auth_request_i(1'b0),        // TODO: Connect to auth request
@@ -443,10 +444,10 @@ module sdcard_controller #(
         .break_hit_o(),               // TODO: Connect to break hit
         .step_done_o(),               // TODO: Connect to step done
         .debug_error_o(),             // TODO: Connect to debug error
-        .trace_data_i(trace_data),    // TODO: Connect to trace data input
+        .trace_data_i({24'h0, trace_data}),    // TODO: Connect to trace data input
         .trace_valid_i(trace_valid),  // TODO: Connect to trace valid input
         .trace_type_i(4'h0),          // TODO: Connect to trace type
-        .trace_data_o(trace_data_o),
+        .trace_data_o(debug_trace_data),
         .trace_valid_o(trace_valid_o),
         .trace_type_o(),              // TODO: Connect to trace type output
         .debug_addr_i(8'h0),          // TODO: Connect to debug address
@@ -576,7 +577,9 @@ module sdcard_controller #(
         .dma_done(dma_done),
         .error_interrupt(error_interrupt),
         .debug_enable(debug_enable),
-        .power_state(power_state)
+        .power_state(power_state),
+        .cal_busy(cal_busy),
+        .performance_overflow(performance_overflow)
     );
 
     // SD Interface Module
@@ -597,5 +600,8 @@ module sdcard_controller #(
         .error_status(error_status),
         .error_clear(error_clear)
     );
+
+    // Debug trace data output assignment
+    assign trace_data_o = debug_trace_data[7:0];
 
 endmodule

@@ -223,14 +223,14 @@ module sdcard_interrupt_controller (
                     // Queue new interrupts
                     if (pending_interrupts != 8'h0 && queue_count < MAX_QUEUE_SIZE) begin
                         // Find highest priority pending interrupt
-                        for (int i = 0; i < 8; i = i + 1) begin
+                        for (logic [2:0] i = 0; i < 8; i = i + 1) begin
                             if (pending_interrupts[i] && !interrupt_queue[queue_tail].pending) begin
-                                interrupt_queue[queue_tail].priority_level <= get_priority(i);
-                                interrupt_queue[queue_tail].source_id <= i;
+                                interrupt_queue[queue_tail].priority_level <= get_priority({5'h0, i});
+                                interrupt_queue[queue_tail].source_id <= {5'h0, i};
                                 interrupt_queue[queue_tail].timestamp <= interrupt_timestamp;
                                 interrupt_queue[queue_tail].acknowledged <= 1'b0;
                                 interrupt_queue[queue_tail].pending <= 1'b1;
-                                interrupt_queue[queue_tail].masked <= interrupt_mask[i];
+                                interrupt_queue[queue_tail].masked <= interrupt_mask[i[1:0]];
                                 
                                 queue_tail <= queue_tail + 3'h1;
                                 queue_count <= queue_count + 3'h1;
@@ -244,7 +244,7 @@ module sdcard_interrupt_controller (
                 
                 INT_PRIORITIZE: begin
                     // Sort queue by priority (bubble sort for simplicity)
-                    for (int i = 0; i < queue_count - 1; i = i + 1) begin
+                    for (logic [2:0] i = 0; i < queue_count - 1; i = i + 1) begin
                         if (interrupt_queue[i].priority_level < interrupt_queue[i + 1].priority_level) begin
                             interrupt_queue[i] <= interrupt_queue[i + 1];
                             interrupt_queue[i + 1] <= interrupt_queue[i];
