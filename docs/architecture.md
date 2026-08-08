@@ -8,7 +8,7 @@ This document describes the internal architecture, interfaces, and design detail
 
 ## Block Diagram
 
-```
+```text
                     SD Card Controller Architecture
                     ===============================
 
@@ -128,17 +128,27 @@ This document describes the internal architecture, interfaces, and design detail
     └─────────────┘         └─────────────┘         └─────────────┘
 ```
 
+The diagram is a functional view, not a module hierarchy. Some labelled functions
+are implemented inside a larger module rather than as a block of their own — the
+data FIFO and CRC generation live in the data and command engines — and three
+labels have **no implementation in the current RTL** at all: *Voltage Monitor* and
+*Power Optimize* in the power controller, and *Security Logging* in the security
+controller. See Internal Modules below for the mapping onto `rtl/`.
+
 ---
 
 ## Parameters
 
+All parameters carry the `SDCARD_` block prefix, per the Vyges namespace-isolation
+convention, so that several IP blocks can be integrated without collisions.
+
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `APB_ADDR_WIDTH` | int | 16 | Width of APB address bus |
+| ----------- | ------ | --------- | ------------- |
+| `SDCARD_APB_ADDR_WIDTH` | int | 16 | Width of APB address bus |
 | `SDCARD_DATA_WIDTH` | int | 4 | SD card data width (1, 4, or 8 bits) |
-| `FIFO_DEPTH` | int | 512 | FIFO depth for data buffering |
-| `DMA_ENABLE` | bool | true | Enable DMA support |
-| `SPI_MODE_ENABLE` | bool | true | Enable SPI mode support |
+| `SDCARD_FIFO_DEPTH` | int | 512 | FIFO depth for data buffering |
+| `SDCARD_DMA_ENABLE` | bit | 1'b1 | Enable DMA support |
+| `SDCARD_SPI_MODE_ENABLE` | bit | 1'b1 | Enable SPI mode support |
 
 ---
 
@@ -147,7 +157,7 @@ This document describes the internal architecture, interfaces, and design detail
 ### APB Slave Interface
 
 | Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
+| -------- | ----------- | ------- | ------------- |
 | `PCLK_i` | input | 1 | APB clock |
 | `PRESETn_i` | input | 1 | APB reset, active low |
 | `PSEL_i` | input | 1 | APB select |
@@ -162,7 +172,7 @@ This document describes the internal architecture, interfaces, and design detail
 ### SD Card Interface
 
 | Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
+| -------- | ----------- | ------- | ------------- |
 | `sd_clk_o` | output | 1 | SD card clock |
 | `sd_cmd_io` | bidir | 1 | SD command line |
 | `sd_dat_io` | bidir | 4 | SD data lines |
@@ -174,7 +184,7 @@ This document describes the internal architecture, interfaces, and design detail
 ### Interrupt Interface
 
 | Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
+| -------- | ----------- | ------- | ------------- |
 | `sd_irq_o` | output | 1 | SD card interrupt |
 | `dma_irq_o` | output | 1 | DMA transfer complete interrupt |
 | `error_irq_o` | output | 1 | Error condition interrupt |
@@ -183,7 +193,7 @@ This document describes the internal architecture, interfaces, and design detail
 ### DMA Interface (Optional)
 
 | Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
+| -------- | ----------- | ------- | ------------- |
 | `dma_req_o` | output | 1 | DMA request |
 | `dma_ack_i` | input | 1 | DMA acknowledge |
 | `dma_addr_o` | output | 32 | DMA address |
@@ -195,7 +205,7 @@ This document describes the internal architecture, interfaces, and design detail
 ### Debug Interface
 
 | Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
+| -------- | ----------- | ------- | ------------- |
 | `jtag_tck_i` | input | 1 | JTAG test clock |
 | `jtag_tms_i` | input | 1 | JTAG test mode select |
 | `jtag_tdi_i` | input | 1 | JTAG test data input |
@@ -209,7 +219,7 @@ This document describes the internal architecture, interfaces, and design detail
 ## Register Map
 
 | Address | Register Name | Access | Description |
-|---------|---------------|--------|-------------|
+| --------- | --------------- | -------- | ------------- |
 | 0x00 | SDCARD_CTRL | R/W | Control register |
 | 0x04 | SDCARD_STATUS | R | Status register |
 | 0x08 | SDCARD_CMD | R/W | Command register |
@@ -239,41 +249,52 @@ This document describes the internal architecture, interfaces, and design detail
 
 ## Internal Modules
 
+`sdcard_controller` is a purely structural top level: it declares no logic of its
+own and instantiates the fifteen modules below. Each entry names the RTL file
+that implements it, so this list can be checked against `rtl/` directly.
+
 ### Core Functional Modules
 
-- **APB Interface**: Implements APB3 slave protocol with error handling
-- **Command Engine**: Handles SD command generation, transmission, and response parsing
-- **Data Engine**: Manages data block transmission/reception with CRC checking
-- **Clock Generator**: Provides configurable SD card clock with calibration
-- **FIFO Controller**: Manages data buffering with flow control
-- **CRC Generator**: Implements CRC7 for commands and CRC16 for data
-- **DMA Controller**: Optional DMA support for high-speed transfers
+- **`sdcard_apb_interface`**: Implements APB3 slave protocol with error handling
+- **`sdcard_register_file`**: Holds the register map and handles read/write decode
+- **`sdcard_command_engine`**: Handles SD command generation, transmission, and response parsing
+- **`sdcard_data_engine`**: Manages data block transmission/reception with CRC checking
+- **`sdcard_clock_generator`**: Provides configurable SD card clock with calibration
+- **`sdcard_dma_controller`**: Optional DMA support for high-speed transfers
 
 ### Power Management Modules
 
-- **Power Controller**: Manages power states and power sequencing
-- **Voltage Monitor**: Monitors voltage levels and detects faults
-- **Power Optimizer**: Optimizes power consumption based on usage
+- **`sdcard_power_controller`**: Manages power states and power sequencing
 
 ### Security Modules
 
-- **Security Controller**: Implements access control and secure boot
-- **Tamper Detection**: Detects hardware, clock, voltage, and temperature tampering
-- **Encryption Engine**: Optional data encryption support
-- **Security Logger**: Logs security events and access attempts
+- **`sdcard_security_controller`**: Implements access control, authentication, lock and recovery states
 
 ### Debug and Test Modules
 
-- **Debug Controller**: Manages JTAG interface and trace generation
-- **Test Controller**: Implements BIST, scan chains, and test modes
-- **Error Controller**: Handles error detection, recovery, and reporting
-- **Performance Controller**: Monitors and optimizes performance
+- **`sdcard_debug_controller`**: Manages JTAG interface, trace generation, and breakpoints
+- **`sdcard_test_controller`**: Implements BIST, scan chains, and test modes
+- **`sdcard_error_controller`**: Handles error detection, recovery, and reporting
+- **`sdcard_performance_controller`**: Monitors and optimizes performance
 
 ### Support Modules
 
-- **Interrupt Controller**: Manages interrupt generation and prioritization
-- **SD Interface**: Handles SD card signal control and timing
-- **Calibration Controller**: Manages clock and timing calibration
+- **`sdcard_interrupt_controller`**: Manages interrupt generation, queueing, and prioritization
+- **`sdcard_interface`**: Handles SD card signal control and timing
+- **`sdcard_calibration_controller`**: Manages clock and timing calibration
+
+### Functions implemented inline, not as separate modules
+
+These are real behaviours of the design, but they live inside the modules above
+rather than in dedicated RTL files. Earlier revisions of this document listed
+them as modules of their own, which did not match `rtl/`.
+
+- **FIFO buffering** and **CRC7/CRC16 generation**: inside the data and command engines
+- **Tamper detection** and **secure-boot / encryption hooks**: inside `sdcard_security_controller`
+
+Voltage monitoring, power optimisation, and security event logging appear in the
+feature narrative below but have **no implementation in the current RTL**. They
+are design intent, not delivered function.
 
 ---
 
@@ -304,56 +325,97 @@ This document describes the internal architecture, interfaces, and design detail
 
 ### Power States
 
-- **Active State**: Full functionality, 50mW typical power consumption
-- **Idle State**: Reduced functionality, 5mW typical power consumption
-- **Sleep State**: Minimal functionality, 1mW typical power consumption
-- **Power-down State**: Complete shutdown, <100μW power consumption
+`sdcard_power_controller` implements six states (`pwr_state_t`). Power figures are
+design targets, not measurements — see Performance Characteristics below.
+
+| State | Encoding | Description |
+| ------- | ---------- | ------------- |
+| `PWR_OFF` | 3'b000 | Complete shutdown |
+| `PWR_STARTUP` | 3'b001 | Power-up sequencing before active operation |
+| `PWR_ACTIVE` | 3'b010 | Full functionality |
+| `PWR_IDLE` | 3'b011 | Reduced functionality |
+| `PWR_SLEEP` | 3'b100 | Minimal functionality |
+| `PWR_FAULT` | 3'b101 | Power fault detected; requires recovery |
 
 ---
 
 ## State Machine
 
-### Main Controller States
+### Top level has no state machine
 
+`sdcard_controller` is a structural wrapper containing no procedural logic. Control
+is distributed across the submodules, each with its own FSM. Earlier revisions of
+this document showed a single top-level IDLE / INIT / READY / CMD SEND flow; no
+such machine exists in `rtl/`.
+
+The command engine below carries the command-response sequence that diagram was
+describing. The other FSMs are named alongside it.
+
+### Command Engine States (`cmd_state_t`, `sdcard_command_engine`)
+
+```text
+                    ┌──────────────┐
+             ┌─────▶│  CMD_IDLE    │◀────────────────┬──────────────┐
+             │      └──────┬───────┘                 │              │
+             │             │ command request         │              │
+             │             ▼                         │              │
+             │      ┌──────────────┐                 │              │
+             │      │  CMD_SETUP   │                 │              │
+             │      └──────┬───────┘                 │              │
+             │             ▼                         │              │
+             │      ┌──────────────┐                 │              │
+             │      │  CMD_SEND    │                 │              │
+             │      └──────┬───────┘                 │              │
+             │             ▼                         │              │
+             │      ┌──────────────┐   timeout   ┌───┴──────────┐   │
+             │      │CMD_WAIT_RESP ├────────────▶│ CMD_TIMEOUT  │   │
+             │      └──────┬───────┘             └──────────────┘   │
+             │             │ response received                      │
+             │             ▼                                        │
+             │      ┌──────────────┐                                │
+             │      │ CMD_RECEIVE  │                                │
+             │      └──────┬───────┘                                │
+             │             ▼                                        │
+             │      ┌──────────────┐   CRC fail  ┌──────────────┐   │
+             │      │CMD_CHECK_CRC ├────────────▶│  CMD_ERROR   ├───┘
+             │      └──────┬───────┘             └──────────────┘
+             │             │ CRC pass
+             │             ▼
+             │      ┌──────────────┐
+             └──────┤ CMD_COMPLETE │
+                    └──────────────┘
+
+  CMD_BUSY is entered while the card holds the line busy and returns to CMD_IDLE.
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   IDLE      │───▶│  INIT       │───▶│  READY      │───▶│  CMD        │
-│             │    │             │    │             │    │  SEND       │
-│ - Wait for  │    │ - Power up  │    │ - Wait for  │    │             │
-│   command   │    │ - Clock     │    │   command   │    │ - Send      │
-│ - Reset     │    │   enable    │    │ - Card      │    │   command   │
-│   state     │    │ - Card      │    │   ready     │    │ - Wait for  │
-│             │    │   detect    │    │             │    │   response  │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-       ▲                   │                   │                   │
-       │                   │                   │                   │
-       │                   ▼                   ▼                   ▼
-       │            ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-       │            │   ERROR     │    │   DATA      │    │  RESPONSE   │
-       │            │             │    │  TRANSFER   │    │  RECEIVE    │
-       │            │ - Error     │    │             │    │             │
-       │            │   handling  │    │ - Read/     │    │ - Receive   │
-       │            │ - Status    │    │   Write     │    │   response  │
-       │            │   report    │    │   data      │    │ - Parse     │
-       │            │ - Recovery  │    │ - CRC check │    │   response  │
-       │            │             │    │ - DMA xfer  │    │ - Check     │
-       │            └─────────────┘    └─────────────┘    │   status    │
-       │                       ▲                   │                   │
-       │                       │                   │                   │
-       └───────────────────────┼───────────────────┼───────────────────┘
-                               │                   │
-                               ▼                   ▼
-                       ┌─────────────┐    ┌─────────────┐
-                       │   BUSY      │    │  COMPLETE   │
-                       │             │    │             │
-                       │ - Wait for  │    │ - Command   │
-                       │   card      │    │   complete  │
-                       │   ready     │    │ - Update    │
-                       │ - Timeout   │    │   status    │
-                       │   check     │    │ - Generate  │
-                       │             │    │   interrupt │
-                       └─────────────┘    └─────────────┘
-```
+
+| State | Encoding | Description |
+| ------- | ---------- | ------------- |
+| `CMD_IDLE` | 4'b0000 | Wait for a command request |
+| `CMD_SETUP` | 4'b0001 | Latch command index and argument |
+| `CMD_SEND` | 4'b0010 | Shift the command out with CRC7 |
+| `CMD_WAIT_RESP` | 4'b0011 | Await response, or time out |
+| `CMD_RECEIVE` | 4'b0100 | Shift the response in |
+| `CMD_CHECK_CRC` | 4'b0101 | Validate the response CRC |
+| `CMD_COMPLETE` | 4'b0110 | Update status, raise completion |
+| `CMD_ERROR` | 4'b0111 | CRC or protocol error, return to idle |
+| `CMD_TIMEOUT` | 4'b1000 | No response in time, return to idle |
+| `CMD_BUSY` | 4'b1001 | Card signalling busy |
+
+### Other state machines
+
+Each of these is defined in the module named, and none of them is visible at the
+top level:
+
+| Module | Type | States |
+| -------- | ------ | -------- |
+| `sdcard_data_engine` | data block transfer | see `rtl/sdcard_data_engine.sv` |
+| `sdcard_power_controller` | `pwr_state_t` | 6, listed under Power Domains above |
+| `sdcard_interrupt_controller` | `interrupt_state_t` | 7: IDLE, DETECT, QUEUE, PRIORITIZE, GENERATE, ACKNOWLEDGE, CLEAR |
+| `sdcard_security_controller` | security FSM | IDLE, AUTH, ACCESS, LOCK, MONITOR, ALERT, RECOVERY, ENCRYPT, DECRYPT |
+| `sdcard_error_controller` | `error_state_t` | see `rtl/sdcard_error_controller.sv` |
+| `sdcard_dma_controller` | DMA transfer | see `rtl/sdcard_dma_controller.sv` |
+| `sdcard_apb_interface` | APB protocol | see `rtl/sdcard_apb_interface.sv` |
+| `sdcard_clock_generator`, `sdcard_calibration_controller`, `sdcard_debug_controller`, `sdcard_test_controller`, `sdcard_interface` | various | see the respective files |
 
 ---
 
@@ -361,7 +423,7 @@ This document describes the internal architecture, interfaces, and design detail
 
 ### APB Interface Flow
 
-```
+```text
                     SD Card Controller Signal Flow
                     ===============================
 
@@ -402,7 +464,7 @@ APB Interface Flow:
 
 ### Clock Domain Distribution
 
-```
+```text
                     Clock Domain Distribution
                     =========================
 
@@ -442,7 +504,13 @@ APB Interface Flow:
 
 ## Performance Characteristics
 
-### Timing Specifications
+> **These are design targets, not measured results.** No timing, power, or
+> throughput characterisation has been run on this IP: the repository contains no
+> STA reports, no power analysis, and no silicon or FPGA measurements. Treat every
+> number below as an objective to design and sign off against, and do not quote
+> any of it as a specification until it is backed by a characterisation run.
+
+### Timing Specifications (targets)
 
 - **APB Clock**: 50MHz - 100MHz operation
 - **SD Card Clock**: 400kHz - 50MHz configurable
@@ -450,14 +518,14 @@ APB Interface Flow:
 - **Data Transfer**: < 1ms per 512-byte block
 - **Interrupt Latency**: < 10μs
 
-### Throughput Specifications
+### Throughput Specifications (targets)
 
 - **Sustained Transfer Rate**: 20MB/s minimum
 - **Burst Transfer Rate**: 25MB/s maximum
 - **Command Processing**: 1000 commands/second
 - **Queue Depth**: Up to 8 pending commands
 
-### Power Specifications
+### Power Specifications (targets)
 
 - **Active Power**: 50mW typical, 75mW maximum
 - **Idle Power**: 5mW typical, 10mW maximum
