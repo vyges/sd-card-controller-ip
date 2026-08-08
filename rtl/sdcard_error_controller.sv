@@ -165,7 +165,9 @@ module sdcard_error_controller (
     always_ff @(posedge PCLK_i or negedge PRESETn_i) begin
         if (!PRESETn_i) begin
             current_error <= '0;
-            error_history <= '{8{'0}};
+            for (int i = 0; i < 8; i++) begin
+                error_history[i] <= '0;
+            end
             error_history_ptr <= 3'h0;
             error_counter <= 16'h0;
             error_timestamp <= 16'h0;

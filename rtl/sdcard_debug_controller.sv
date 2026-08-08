@@ -401,7 +401,9 @@ module sdcard_debug_controller #(
             trace_full <= 1'b0;
             trace_empty <= 1'b1;
             trace_counter <= 32'h0;
-            break_points <= '{8{16'h0}};
+            for (int i = 0; i < 8; i++) begin
+                break_points[i] <= 16'h0;
+            end
             break_enable <= 8'h0;
             break_condition <= 1'b0;
             step_counter <= 8'h0;
@@ -458,8 +460,13 @@ module sdcard_debug_controller #(
                     debug_ready_o <= 1'b1;
                     
                     // Check for break points
-                    for (logic [2:0] i = 0; i < 8; i = i + 1) begin
-                        if (break_enable[i] && trace_data_i == break_points[i][7:0]) begin
+                    // Loop variable is int, not logic [2:0]: a 3-bit counter can
+                    // never reach 8, so the bound was always true and the loop
+                    // never terminated. break_points is zero-extended to match
+                    // the 32-bit trace bus, which is what the comparison always
+                    // did implicitly.
+                    for (int i = 0; i < 8; i++) begin
+                        if (break_enable[i] && trace_data_i == {24'h0, break_points[i][7:0]}) begin
                             break_condition <= 1'b1;
                             break_hit_o <= 1'b1;
                         end

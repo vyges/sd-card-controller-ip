@@ -256,12 +256,12 @@ module sdcard_security_controller #(
                         key_valid <= 1'b0;
                     end
                     
-                    // Validate access level
-                    if (access_level_i <= 4'hF) begin
-                        access_valid <= 1'b1;
-                    end else begin
-                        access_valid <= 1'b0;
-                    end
+                    // Validate access level.
+                    // access_level_i is 4 bits, so every value it can hold is
+                    // already <= 4'hF; the guard this replaces was always true
+                    // and the else branch was unreachable. Introducing a real
+                    // ceiling would be a policy change, not a lint fix.
+                    access_valid <= 1'b1;
                     
                     // Update authentication attempts
                     auth_attempts_o <= failed_attempts;
@@ -354,7 +354,10 @@ module sdcard_security_controller #(
                     recovery_mode <= 1'b1;
                     
                     // Attempt recovery authentication
-                    if (auth_key_i == stored_auth_key && access_level_i <= 4'hF) begin
+                    // The access_level_i <= 4'hF term this replaces was always
+                    // true for a 4-bit input and contributed nothing to the
+                    // condition.
+                    if (auth_key_i == stored_auth_key) begin
                         key_valid <= 1'b1;
                         access_valid <= 1'b1;
                     end

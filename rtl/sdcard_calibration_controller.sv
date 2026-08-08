@@ -183,7 +183,9 @@ module sdcard_calibration_controller (
             cal_success <= 1'b0;
             cal_failed <= 1'b0;
             prev_clk_divider <= 16'h007F;
-            cal_history <= '{16'h007F, 16'h007F, 16'h007F, 16'h007F};
+            for (int i = 0; i < 4; i++) begin
+                cal_history[i] <= 16'h007F;
+            end
             cal_history_ptr <= 2'b00;
             clk_calibrated <= 1'b0;
             error_clear <= 1'b0;

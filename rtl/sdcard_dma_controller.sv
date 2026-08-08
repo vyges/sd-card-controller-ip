@@ -175,7 +175,18 @@ module sdcard_dma_controller (
             transfer_complete <= 1'b0;
             transfer_error <= 1'b0;
             error_clear <= 1'b0;
-            
+
+            // Burst timeout detection. This used to live in its own clocked
+            // block, which left transfer_error driven from two always_ff blocks
+            // at once. It only escaped notice because the comparison there was
+            // constant-false, so the second driver optimized away.
+            // >= not >: transfer_count and BURST_TIMEOUT are both 16 bits and
+            // the timeout is 16'hFFFF, so a strict > could never be true and
+            // this error could never be raised.
+            if (transfer_active && !dma_ack_i && transfer_count >= BURST_TIMEOUT) begin
+                transfer_error <= 1'b1;
+            end
+
             case (dma_state)
                 DMA_IDLE: begin
                     dma_busy <= 1'b0;
@@ -261,13 +272,6 @@ module sdcard_dma_controller (
                     // No action
                 end
             endcase
-        end
-    end
-    
-    // Error detection
-    always_ff @(posedge PCLK_i) begin
-        if (transfer_active && !dma_ack_i && transfer_count > BURST_TIMEOUT) begin
-            transfer_error <= 1'b1;
         end
     end
     

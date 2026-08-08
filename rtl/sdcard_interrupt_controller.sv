@@ -163,7 +163,9 @@ module sdcard_interrupt_controller (
     // Interrupt control logic
     always_ff @(posedge PCLK_i or negedge PRESETn_i) begin
         if (!PRESETn_i) begin
-            interrupt_queue <= '{8{'0}};
+            for (int i = 0; i < 8; i++) begin
+                interrupt_queue[i] <= '0;
+            end
             queue_head <= 3'h0;
             queue_tail <= 3'h0;
             queue_count <= 3'h0;
@@ -223,10 +225,14 @@ module sdcard_interrupt_controller (
                     // Queue new interrupts
                     if (pending_interrupts != 8'h0 && queue_count < MAX_QUEUE_SIZE) begin
                         // Find highest priority pending interrupt
-                        for (logic [2:0] i = 0; i < 8; i = i + 1) begin
+                        // Loop variable is int, not logic [2:0]: a 3-bit counter can
+                        // never reach 8, so the bound was always true and the loop
+                        // never terminated. The 3-bit slice i[2:0] keeps the source
+                        // id 8 bits wide as before.
+                        for (int i = 0; i < 8; i++) begin
                             if (pending_interrupts[i] && !interrupt_queue[queue_tail].pending) begin
-                                interrupt_queue[queue_tail].priority_level <= get_priority({5'h0, i});
-                                interrupt_queue[queue_tail].source_id <= {5'h0, i};
+                                interrupt_queue[queue_tail].priority_level <= get_priority({5'h0, i[2:0]});
+                                interrupt_queue[queue_tail].source_id <= {5'h0, i[2:0]};
                                 interrupt_queue[queue_tail].timestamp <= interrupt_timestamp;
                                 interrupt_queue[queue_tail].acknowledged <= 1'b0;
                                 interrupt_queue[queue_tail].pending <= 1'b1;

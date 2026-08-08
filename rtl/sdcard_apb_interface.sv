@@ -66,7 +66,9 @@ module sdcard_apb_interface #(
     // Address decoding
     always_comb begin
         decoded_addr = PADDR_i[15:0];
-        addr_valid = (PADDR_i >= 16'h0000) && (PADDR_i <= 16'h005C);
+        // No lower-bound test: PADDR_i is unsigned, so >= 16'h0000 is always
+        // true. Only the upper bound of the register map is meaningful.
+        addr_valid = (PADDR_i <= 16'h005C);
     end
     
     // APB state machine
