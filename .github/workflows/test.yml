@@ -3,12 +3,19 @@ name: SD Card Controller IP Tests
 on:
   # Manual trigger (workflow_dispatch)
   workflow_dispatch:
-  
+
   # Uncomment the lines below to enable automatic triggers
   # push:
   #   branches: [ main, develop ]
   # pull_request:
   #   branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -21,26 +28,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y verilator
         
+    # The file list is globbed rather than enumerated. The previous hand-written
+    # list named every module with an sd_ prefix while the sources use sdcard_,
+    # so all 16 paths were wrong and this job could only ever fail.
     - name: Run Verilator linting
       run: |
-        cd rtl
-        verilator --lint-only --top-module sd_card_controller \
-          sd_card_controller.sv \
-          sd_apb_interface.sv \
-          sd_register_file.sv \
-          sd_command_engine.sv \
-          sd_data_engine.sv \
-          sd_clock_generator.sv \
-          sd_dma_controller.sv \
-          sd_power_controller.sv \
-          sd_security_controller.sv \
-          sd_debug_controller.sv \
-          sd_test_controller.sv \
-          sd_error_controller.sv \
-          sd_performance_controller.sv \
-          sd_calibration_controller.sv \
-          sd_interrupt_controller.sv \
-          sd_interface.sv
+        verilator --lint-only --top-module sdcard_controller rtl/*.sv
 
   simulation:
     runs-on: ubuntu-latest
@@ -70,7 +63,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
         
@@ -99,26 +92,21 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y yosys
         
+    # Generic synthesis, not synth_sky130: that command does not exist in Yosys
+    # (there is no sky130 target script), so this job aborted on the first line.
+    # Mapping to sky130 standard cells needs the PDK liberty and belongs in the
+    # OpenLane flow, not in a smoke test.
+    #
+    # KNOWN FAILURE: Yosys's built-in Verilog frontend cannot parse SystemVerilog
+    # assignment patterns ('{...}), which four modules use to reset arrays —
+    # calibration, debug, interrupt and error controllers. It reports these as
+    # "syntax error, unexpected OP_CAST". Verified against Yosys 0.62. Fixing it
+    # needs either an SV-capable frontend (yosys-slang / synlig) installed here,
+    # or those four resets rewritten as loops. Verilator parses them fine.
     - name: Run synthesis
       run: |
-        cd flow/openlane
-        yosys -p "synth_sky130 -top sd_card_controller -json sd_card_controller.json" \
-          ../../rtl/sd_card_controller.sv \
-          ../../rtl/sd_apb_interface.sv \
-          ../../rtl/sd_register_file.sv \
-          ../../rtl/sd_command_engine.sv \
-          ../../rtl/sd_data_engine.sv \
-          ../../rtl/sd_clock_generator.sv \
-          ../../rtl/sd_dma_controller.sv \
-          ../../rtl/sd_power_controller.sv \
-          ../../rtl/sd_security_controller.sv \
-          ../../rtl/sd_debug_controller.sv \
-          ../../rtl/sd_test_controller.sv \
-          ../../rtl/sd_error_controller.sv \
-          ../../rtl/sd_performance_controller.sv \
-          ../../rtl/sd_calibration_controller.sv \
-          ../../rtl/sd_interrupt_controller.sv \
-          ../../rtl/sd_interface.sv
+        yosys -p "synth -top sdcard_controller; write_json flow/openlane/sdcard_controller.json" \
+          rtl/*.sv
 
   documentation:
     runs-on: ubuntu-latest
@@ -147,7 +135,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
         
@@ -165,11 +153,27 @@ jobs:
       run: |
         cd tb
         make SIM=cocotb coverage
-        
+
+    # tb/Makefile's coverage target is still a TODO stub that only echoes, so
+    # no report is produced yet. The upload previously pointed at ./coverage.xml
+    # from the repo root — a path nothing writes, and one directory above where
+    # the target would write it. Guard on the file so this skips today and works
+    # unchanged once coverage is actually implemented.
+    - name: Check for coverage report
+      id: cov
+      run: |
+        if [ -f tb/coverage.xml ]; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "found=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::No tb/coverage.xml — tb/Makefile coverage target is a stub. Skipping upload."
+        fi
+
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      if: steps.cov.outputs.found == 'true'
+      uses: codecov/codecov-action@v5
       with:
-        file: ./coverage.xml
+        files: ./tb/coverage.xml
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false 
