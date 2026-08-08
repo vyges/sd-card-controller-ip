@@ -85,3 +85,8 @@ secrets.json
 .vyges-ai-context.json.backup.*
 .vyges-ai-context.sha256
 
+
+# Yosys netlist emitted by the synthesis CI job. flow/openlane/ otherwise holds
+# checked-in source (Makefile, config.template.json, constraints.sdc), so this
+# is named rather than globbed as *.json.
+flow/openlane/sdcard_controller.json

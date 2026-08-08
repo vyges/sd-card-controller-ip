@@ -88,7 +88,20 @@ module sdcard_interrupt_controller (
     logic [7:0]                    active_interrupts; // Active interrupts
     logic [7:0]                    pending_interrupts; // Pending interrupts
     logic                          interrupt_overflow; // Interrupt overflow
-    
+
+    // Snapshots of the queue entries addressed by queue_head and queue_tail.
+    //
+    // Yosys's built-in frontend cannot parse a member select on an unpacked
+    // array element chosen by a variable index — interrupt_queue[queue_head]
+    // .pending and friends — so every such read goes through these snapshots
+    // and every write assigns a whole element instead of individual fields.
+    //
+    // Reading them combinationally gives the pre-clock-edge value, which is
+    // exactly what the member reads they replace saw: nonblocking writes to
+    // interrupt_queue do not land until the end of the timestep.
+    interrupt_entry_t              head_entry;        // interrupt_queue[queue_head]
+    interrupt_entry_t              tail_entry;        // interrupt_queue[queue_tail]
+
     // Interrupt state machine states
     typedef enum logic [2:0] {
         INT_IDLE = 3'b000,
@@ -160,6 +173,12 @@ module sdcard_interrupt_controller (
         endcase
     end
     
+    // Queue entry snapshots, see the declarations above
+    always_comb begin
+        head_entry = interrupt_queue[queue_head];
+        tail_entry = interrupt_queue[queue_tail];
+    end
+
     // Interrupt control logic
     always_ff @(posedge PCLK_i or negedge PRESETn_i) begin
         if (!PRESETn_i) begin
@@ -230,19 +249,31 @@ module sdcard_interrupt_controller (
                         // never terminated. The 3-bit slice i[2:0] keeps the source
                         // id 8 bits wide as before.
                         for (int i = 0; i < 8; i++) begin
-                            if (pending_interrupts[i] && !interrupt_queue[queue_tail].pending) begin
-                                interrupt_queue[queue_tail].priority_level <= get_priority({5'h0, i[2:0]});
-                                interrupt_queue[queue_tail].source_id <= {5'h0, i[2:0]};
-                                interrupt_queue[queue_tail].timestamp <= interrupt_timestamp;
-                                interrupt_queue[queue_tail].acknowledged <= 1'b0;
-                                interrupt_queue[queue_tail].pending <= 1'b1;
-                                interrupt_queue[queue_tail].masked <= interrupt_mask[i[1:0]];
-                                
+                            // tail_entry.pending is the pre-edge snapshot and so
+                            // holds the same value for every iteration, exactly
+                            // as the member read it replaces did. The guard is
+                            // therefore loop-invariant and each match overwrites
+                            // the last, so the highest-numbered pending source
+                            // wins. That last-match behaviour is intended; the
+                            // note that used to sit here claimed first-match,
+                            // which the nonblocking writes never gave.
+                            if (pending_interrupts[i] && !tail_entry.pending) begin
+                                // Whole-element write. Fields are concatenated in
+                                // interrupt_entry_t declaration order:
+                                // priority_level, source_id, timestamp,
+                                // acknowledged, pending, masked.
+                                interrupt_queue[queue_tail] <= {
+                                    get_priority({5'h0, i[2:0]}),   // priority_level
+                                    {5'h0, i[2:0]},                 // source_id
+                                    interrupt_timestamp,            // timestamp
+                                    1'b0,                           // acknowledged
+                                    1'b1,                           // pending
+                                    interrupt_mask[i[1:0]]          // masked
+                                };
+
                                 queue_tail <= queue_tail + 3'h1;
                                 queue_count <= queue_count + 3'h1;
                                 pending_interrupts[i] <= 1'b0;
-                                // Note: break not supported in Icarus Verilog
-                                // This will continue processing but only first match will be effective
                             end
                         end
                     end
@@ -250,18 +281,27 @@ module sdcard_interrupt_controller (
                 
                 INT_PRIORITIZE: begin
                     // Sort queue by priority (bubble sort for simplicity)
-                    for (logic [2:0] i = 0; i < queue_count - 1; i = i + 1) begin
-                        if (interrupt_queue[i].priority_level < interrupt_queue[i + 1].priority_level) begin
-                            interrupt_queue[i] <= interrupt_queue[i + 1];
-                            interrupt_queue[i + 1] <= interrupt_queue[i];
+                    // Constant loop bound so the loop can be unrolled; the
+                    // original bound was queue_count - 1, which Yosys cannot
+                    // evaluate. The inner guard reproduces that bound exactly,
+                    // including the queue_count == 0 case where the 3-bit
+                    // subtraction wraps to 3'h7 and all seven comparisons run.
+                    // Indices are constant per unrolled iteration, so the member
+                    // selects below parse.
+                    for (int i = 0; i < 7; i++) begin
+                        if (i[2:0] < queue_count - 3'h1) begin
+                            if (interrupt_queue[i].priority_level < interrupt_queue[i + 1].priority_level) begin
+                                interrupt_queue[i] <= interrupt_queue[i + 1];
+                                interrupt_queue[i + 1] <= interrupt_queue[i];
+                            end
                         end
                     end
                 end
                 
                 INT_GENERATE: begin
                     // Generate interrupt signals
-                    if (queue_count > 0 && !interrupt_queue[queue_head].masked) begin
-                        case (interrupt_queue[queue_head].source_id)
+                    if (queue_count > 0 && !head_entry.masked) begin
+                        case (head_entry.source_id)
                             INT_SOURCE_CMD_DONE: begin
                                 sd_irq_o <= 1'b1;
                             end
@@ -287,7 +327,7 @@ module sdcard_interrupt_controller (
                             end
                         endcase
                         
-                        interrupt_pending <= interrupt_pending | (4'h1 << interrupt_queue[queue_head].source_id[1:0]);
+                        interrupt_pending <= interrupt_pending | (4'h1 << head_entry.source_id[1:0]);
                     end
                 end
                 
@@ -296,13 +336,23 @@ module sdcard_interrupt_controller (
                     // In a real system, this would wait for the CPU to acknowledge
                     // For now, we'll auto-acknowledge after a few cycles
                     if (interrupt_timestamp[3:0] == 4'hF) begin
-                        interrupt_queue[queue_head].acknowledged <= 1'b1;
+                        // Read-modify-write of the whole element: only the
+                        // acknowledged flag changes, the rest is carried over
+                        // from the snapshot.
+                        interrupt_queue[queue_head] <= {
+                            head_entry.priority_level,
+                            head_entry.source_id,
+                            head_entry.timestamp,
+                            1'b1,                   // acknowledged
+                            head_entry.pending,
+                            head_entry.masked
+                        };
                     end
                 end
                 
                 INT_CLEAR: begin
                     // Clear acknowledged interrupts
-                    if (interrupt_queue[queue_head].acknowledged) begin
+                    if (head_entry.acknowledged) begin
                         interrupt_queue[queue_head] <= '0;
                         queue_head <= queue_head + 3'h1;
                         queue_count <= queue_count - 3'h1;
@@ -314,7 +364,10 @@ module sdcard_interrupt_controller (
                         debug_irq_o <= 1'b0;
                         
                         // Clear pending status
-                        interrupt_pending <= interrupt_pending & ~(4'h1 << interrupt_queue[queue_head].source_id[1:0]);
+                        // head_entry is the pre-edge snapshot, so this still sees
+                        // the source id even though the element is being cleared
+                        // to '0 in the same timestep — as before.
+                        interrupt_pending <= interrupt_pending & ~(4'h1 << head_entry.source_id[1:0]);
                     end
                 end
                 
