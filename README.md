@@ -6,6 +6,26 @@
 
 A high-performance SD Card controller with APB interface supporting SD/SDHC/SDXC cards with SPI and SD modes, DMA support, and comprehensive error handling.
 
+> ## ⚠️ Status: in development
+>
+> This IP is an early design and is not ready to be integrated. The feature and
+> specification lists below describe the intended design; not all of it is
+> implemented yet.
+>
+> In particular:
+>
+> - The **security, debug, and test controllers** are present in RTL but their
+>   ports are tied off at the top level, so those features are inert today.
+>   Security is designed to interface with separate cryptographic IP rather than
+>   implement ciphers itself, and that connection has not been made.
+> - **Performance, power, and reliability figures are design targets.** No timing,
+>   power, or reliability characterisation has been run.
+> - **Compliance and certification entries are targets**, not achieved
+>   qualifications.
+>
+> The register map, pin list, and module descriptions in the documentation are
+> generated from the RTL and are accurate.
+
 ## 🚀 Features
 
 - **Protocol Support**: SD 1.0/1.1, SDHC 2.0, SDXC 3.0
