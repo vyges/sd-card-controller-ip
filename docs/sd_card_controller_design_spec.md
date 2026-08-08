@@ -2,7 +2,7 @@
 
 ## Project Metadata
 
-- **IP Name**: sd-card-controller
+- **IP Name**: vyges/sdcard-controller
 - **Version**: 1.0.0
 - **Description**: High-performance SD Card controller with APB interface supporting SD/SDHC/SDXC cards
 - **License**: Apache-2.0
@@ -10,12 +10,15 @@
 - **Design Type**: Digital
 - **Maturity**: Prototype
 - **Author**: Vyges Development Team
-- **Created**: 2025-01-15
-- **Updated**: 2025-01-15
+- **Created**: 2025-08-15
+- **Updated**: 2026-08-08
+
+Dates and IP name mirror `vyges-metadata.json`, which is authoritative.
 
 ## Design Flow
 
 ### Development Workflow
+
 1. **Requirements Analysis**: SD Card protocol compliance and interface requirements
 2. **Architecture Design**: Block-level design with interface definitions
 3. **RTL Development**: SystemVerilog implementation following Vyges conventions
@@ -25,6 +28,7 @@
 7. **Documentation**: Complete specification and user guides
 
 ### Tool Requirements
+
 - **RTL Development**: SystemVerilog-2017
 - **Simulation**: Verilator, Icarus Verilog
 - **ASIC Synthesis**: OpenLane with Sky130B PDK
@@ -34,6 +38,7 @@
 ## Functional Requirements
 
 ### Core Functionality
+
 1. **SD Card Protocol Support**
    - SD 1.0/1.1 (up to 2GB)
    - SDHC 2.0 (up to 32GB)
@@ -69,12 +74,14 @@
    - Error status reporting
 
 ### Performance Requirements
+
 - **Clock Frequency**: Up to 50MHz (SD mode), 25MHz (SPI mode)
 - **Data Transfer Rate**: Up to 25MB/s (SD mode), 12.5MB/s (SPI mode)
 - **Command Response Time**: < 100μs
 - **Block Transfer Time**: < 1ms per 512-byte block
 
 ### Detailed Performance Requirements
+
 - **Latency Breakdown**:
   - Command-to-response latency: < 100μs
   - Data transfer latency: < 1ms per block
@@ -91,26 +98,34 @@
 ## Power Management Requirements
 
 ### Power Domains
+
 - **Core Domain**: Main controller logic (1.2V nominal)
 - **I/O Domain**: APB and SD card interfaces (3.3V nominal)
 - **SD Card Domain**: SD card power supply (3.3V nominal)
 - **Clock Domain**: Clock generation circuits (1.2V nominal)
 
 ### Power States
-- **Active State**: Full functionality, maximum performance
+
+`sdcard_power_controller` implements six states (`pwr_state_t`). Power figures are
+design targets; no power analysis has been run.
+
+- **`PWR_OFF`** (3'b000): Complete shutdown
+  - Power consumption: < 100uW
+  - Only power-on reset circuit active
+- **`PWR_STARTUP`** (3'b001): Power-up sequencing before active operation
+- **`PWR_ACTIVE`** (3'b010): Full functionality, maximum performance
   - Power consumption: 50mW typical, 75mW maximum
   - All features enabled
-- **Idle State**: Reduced functionality, low power
+- **`PWR_IDLE`** (3'b011): Reduced functionality, low power
   - Power consumption: 5mW typical, 10mW maximum
   - Clock gated, interrupts enabled
-- **Sleep State**: Minimal functionality
+- **`PWR_SLEEP`** (3'b100): Minimal functionality
   - Power consumption: 1mW typical, 2mW maximum
   - Only essential circuits active
-- **Power-down State**: Complete shutdown
-  - Power consumption: < 100μW
-  - Only power-on reset circuit active
+- **`PWR_FAULT`** (3'b101): Power fault detected; requires recovery
 
 ### Power Sequencing
+
 - **Startup Sequence**:
   1. Power-on reset assertion (minimum 100μs)
   2. Core domain power-up
@@ -127,6 +142,7 @@
   5. Core domain power-down
 
 ### Voltage Requirements
+
 - **Core Voltage**: 1.2V ± 10% (1.08V - 1.32V)
 - **I/O Voltage**: 3.3V ± 10% (2.97V - 3.63V)
 - **SD Card Voltage**: 3.3V ± 5% (3.135V - 3.465V)
@@ -136,24 +152,28 @@
 ## Security Requirements
 
 ### Access Control
+
 - **Register Protection**: Critical registers protected by access control
 - **Privilege Levels**: User and supervisor privilege levels
 - **Secure Access**: Secure access to configuration registers
 - **Lock Mechanisms**: Register lock/unlock mechanisms
 
 ### Secure Boot
+
 - **Secure Initialization**: Secure boot sequence validation
 - **Integrity Check**: Firmware integrity verification
 - **Authentication**: Secure authentication mechanisms
 - **Key Management**: Secure key storage and management
 
 ### Tamper Detection
+
 - **Hardware Tamper**: Physical tamper detection
 - **Clock Tamper**: Clock frequency tamper detection
 - **Voltage Tamper**: Voltage level tamper detection
 - **Temperature Tamper**: Temperature range tamper detection
 
 ### Data Protection
+
 - **Encryption**: Optional data encryption support
 - **Secure Storage**: Secure storage for sensitive data
 - **Access Logging**: Security event logging
@@ -162,24 +182,28 @@
 ## Reliability and Fault Tolerance
 
 ### Reliability Specifications
+
 - **MTBF**: > 100,000 hours at 25°C
 - **FIT Rate**: < 100 FIT (Failures in Time)
 - **Operating Life**: 10 years minimum
 - **Environmental**: Industrial temperature range (-40°C to +85°C)
 
 ### Fault Tolerance
+
 - **Single Point of Failure**: No single point of failure in critical paths
 - **Redundant Circuits**: Redundant clock generation and reset circuits
 - **Error Detection**: Comprehensive error detection mechanisms
 - **Fault Isolation**: Fault isolation between functional blocks
 
 ### Error Recovery
+
 - **Automatic Recovery**: Automatic recovery from transient errors
 - **Manual Recovery**: Manual recovery procedures for persistent errors
 - **Graceful Degradation**: Graceful degradation under fault conditions
 - **Error Reporting**: Comprehensive error reporting mechanisms
 
 ### Environmental Requirements
+
 - **Temperature Range**: -40°C to +85°C operating
 - **Humidity**: 5% to 95% non-condensing
 - **Vibration**: 10g peak, 20-2000Hz
@@ -188,29 +212,34 @@
 ## Compliance and Standards
 
 ### SD Association Compliance
+
 - **SD Host Controller Specification**: Version 2.0 compliance
 - **SD Memory Card Specification**: Version 3.0 compliance
 - **SDIO Specification**: Version 2.0 compliance
 - **Test Compliance**: SD Association test suite compliance
 
 ### IEEE Standards
+
 - **IEEE 1149.1**: JTAG boundary scan compliance
 - **IEEE 1500**: Embedded core test compliance
 - **IEEE 1800**: SystemVerilog standard compliance
 
 ### Safety Standards
+
 - **ISO 26262**: Automotive functional safety (ASIL-B)
 - **IEC 61508**: Industrial functional safety (SIL-2)
 - **IEC 60730**: Household appliance safety
 - **UL 60730**: Household appliance safety (North America)
 
 ### EMC Standards
+
 - **CISPR 22**: Information technology equipment emissions
 - **CISPR 24**: Information technology equipment immunity
 - **EN 55022**: European emissions standard
 - **EN 55024**: European immunity standard
 
 ### Environmental Compliance
+
 - **RoHS**: Restriction of Hazardous Substances compliance
 - **REACH**: Registration, Evaluation, Authorization of Chemicals
 - **WEEE**: Waste Electrical and Electronic Equipment
@@ -219,6 +248,7 @@
 ## Debug and Testability
 
 ### Debug Interface
+
 - **JTAG Interface**: IEEE 1149.1 compliant JTAG interface
   - TCK, TMS, TDI, TDO signals
   - Boundary scan support
@@ -231,18 +261,21 @@
 - **Breakpoint Support**: Hardware breakpoint capabilities
 
 ### Built-in Self-Test (BIST)
+
 - **Memory BIST**: FIFO memory self-test
 - **Logic BIST**: Controller logic self-test
 - **Interface BIST**: Interface circuit self-test
 - **Clock BIST**: Clock generation self-test
 
 ### Design for Test (DFT)
+
 - **Scan Chains**: Full scan chain implementation
 - **Test Access**: Test access port (TAP) controller
 - **Test Modes**: Multiple test mode configurations
 - **Test Coverage**: >95% fault coverage target
 
 ### Observability and Controllability
+
 - **Internal Observability**: Access to internal state signals
 - **Internal Controllability**: Control of internal test signals
 - **Test Points**: Physical test points for critical signals
@@ -251,7 +284,8 @@
 ## Interface Design
 
 ### APB Slave Interface
-```
+
+```text
 APB Interface Signals:
 - PCLK_i: APB clock (input)
 - PRESETn_i: APB reset, active low (input)
@@ -266,7 +300,8 @@ APB Interface Signals:
 ```
 
 ### SD Card Interface
-```
+
+```text
 SD Card Interface Signals:
 - sd_clk_o: SD card clock (output)
 - sd_cmd_io: SD command line (bidirectional)
@@ -278,7 +313,8 @@ SD Card Interface Signals:
 ```
 
 ### Interrupt Interface
-```
+
+```text
 Interrupt Signals:
 - sd_irq_o: SD card interrupt (output)
 - dma_irq_o: DMA transfer complete interrupt (output)
@@ -287,7 +323,8 @@ Interrupt Signals:
 ```
 
 ### DMA Interface (Optional)
-```
+
+```text
 DMA Interface Signals:
 - dma_req_o: DMA request (output)
 - dma_ack_i: DMA acknowledge (input)
@@ -299,7 +336,8 @@ DMA Interface Signals:
 ```
 
 ### Debug Interface
-```
+
+```text
 Debug Interface Signals:
 - jtag_tck_i: JTAG test clock (input)
 - jtag_tms_i: JTAG test mode select (input)
@@ -315,7 +353,7 @@ Debug Interface Signals:
 ### Control and Status Registers
 
 | Address | Register Name | Access | Description |
-|---------|---------------|--------|-------------|
+| --------- | --------------- | -------- | ------------- |
 | 0x00 | SDCARD_CTRL | R/W | Control register |
 | 0x04 | SDCARD_STATUS | R | Status register |
 | 0x08 | SDCARD_CMD | R/W | Command register |
@@ -344,7 +382,8 @@ Debug Interface Signals:
 ### Register Bit Definitions
 
 #### SD_CTRL Register (0x00)
-```
+
+```text
 [31:16] Reserved
 [15]    CARD_POWER_EN    - Card power enable
 [14]    CARD_CLK_EN      - Card clock enable
@@ -362,7 +401,8 @@ Debug Interface Signals:
 ```
 
 #### SD_STATUS Register (0x04)
-```
+
+```text
 [31:16] Reserved
 [15]    CARD_PRESENT     - Card present
 [14]    CARD_WRITE_PROT  - Write protect
@@ -380,7 +420,8 @@ Debug Interface Signals:
 ```
 
 #### SD_PWR_CTRL Register (0x40)
-```
+
+```text
 [31:24] Reserved
 [23:20] PWR_STATE        - Power state (0=Active, 1=Idle, 2=Sleep, 3=Power-down)
 [19:16] PWR_DOMAIN       - Power domain control
@@ -394,7 +435,8 @@ Debug Interface Signals:
 ```
 
 #### SD_SEC_CTRL Register (0x44)
-```
+
+```text
 [31:24] Reserved
 [23:20] SEC_LEVEL        - Security level
 [19:16] ACCESS_CTRL      - Access control
@@ -410,24 +452,28 @@ Debug Interface Signals:
 ## Timing Specifications
 
 ### Clock Domains
+
 - **APB Clock (PCLK)**: 50MHz - 100MHz
 - **SD Card Clock**: Configurable 400kHz - 50MHz
 - **Internal Clock**: Same as APB clock
 - **Debug Clock**: Independent debug clock domain
 
 ### Timing Requirements
+
 - **Setup Time**: 2ns minimum
 - **Hold Time**: 1ns minimum
 - **Clock-to-Output**: 5ns maximum
 - **Reset Recovery**: 10 clock cycles minimum
 
 ### SD Card Timing
+
 - **Initial Clock**: 400kHz maximum
 - **Transfer Clock**: Up to 25MHz (SPI), 50MHz (SD)
 - **Command Setup**: 8 clock cycles minimum
 - **Response Timeout**: 64 clock cycles maximum
 
 ### Protocol Timing
+
 - **APB Protocol**: Standard APB timing requirements
 - **SD Protocol**: SD Association timing specifications
 - **DMA Protocol**: Burst transfer timing requirements
@@ -438,24 +484,31 @@ Debug Interface Signals:
 ### Pin Assignment Table
 
 | Pin Name | Direction | Type | Description |
-|----------|-----------|------|-------------|
+| ---------- | ----------- | ------ | ------------- |
 | PCLK_i | Input | Clock | APB clock |
 | PRESETn_i | Input | Reset | APB reset, active low |
 | PSEL_i | Input | Control | APB select |
 | PENABLE_i | Input | Control | APB enable |
 | PWRITE_i | Input | Control | APB write enable |
-| PADDR_i[15:0] | Input | Address | APB address bus |
+| PADDR_i[SDCARD_APB_ADDR_WIDTH-1:0] | Input | Address | APB address bus, default 16 bits |
 | PWDATA_i[31:0] | Input | Data | APB write data |
 | PRDATA_o[31:0] | Output | Data | APB read data |
 | PREADY_o | Output | Control | APB ready |
 | PSLVERR_o | Output | Control | APB slave error |
 | sd_clk_o | Output | Clock | SD card clock |
 | sd_cmd_io | Bidir | Data | SD command line |
-| sd_dat_io[3:0] | Bidir | Data | SD data lines |
+| sd_dat_io[SDCARD_DATA_WIDTH-1:0] | Bidir | Data | SD data lines, default 4 bits |
 | sd_cd_i | Input | Status | Card detect |
 | sd_wp_i | Input | Status | Write protect |
 | sd_pwr_en_o | Output | Control | SD card power enable |
 | sd_vdd_sel_o | Output | Control | SD card voltage select |
+| dma_req_o | Output | Control | DMA request |
+| dma_ack_i | Input | Control | DMA acknowledge |
+| dma_addr_o[31:0] | Output | Address | DMA address |
+| dma_len_o[15:0] | Output | Control | DMA length |
+| dma_we_o | Output | Control | DMA write enable |
+| dma_burst_o | Output | Control | DMA burst mode |
+| dma_cache_o[3:0] | Output | Control | DMA cache attributes |
 | sd_irq_o | Output | Interrupt | SD card interrupt |
 | dma_irq_o | Output | Interrupt | DMA interrupt |
 | error_irq_o | Output | Interrupt | Error interrupt |
@@ -471,18 +524,21 @@ Debug Interface Signals:
 ## Configuration and Calibration
 
 ### Calibration Requirements
+
 - **Clock Calibration**: Automatic clock frequency calibration
 - **Timing Calibration**: SD card timing calibration
 - **Voltage Calibration**: Voltage level calibration
 - **Temperature Compensation**: Temperature-based compensation
 
 ### Configuration Parameters
+
 - **Runtime Configuration**: Dynamic configuration capabilities
 - **Performance Tuning**: Performance optimization parameters
 - **Power Tuning**: Power optimization parameters
 - **Security Configuration**: Security parameter configuration
 
 ### Adaptive Features
+
 - **Performance Adaptation**: Automatic performance adaptation
 - **Power Adaptation**: Automatic power adaptation
 - **Error Adaptation**: Automatic error handling adaptation
@@ -491,24 +547,28 @@ Debug Interface Signals:
 ## Error Handling Requirements
 
 ### Error Categories
+
 - **Protocol Errors**: SD protocol violations
 - **Timing Errors**: Timing requirement violations
 - **Hardware Errors**: Hardware fault conditions
 - **Software Errors**: Software configuration errors
 
 ### Error Recovery
+
 - **Automatic Recovery**: Automatic error recovery procedures
 - **Manual Recovery**: Manual error recovery procedures
 - **Error Isolation**: Error isolation mechanisms
 - **Error Propagation**: Error propagation control
 
 ### Error Reporting
+
 - **Error Logging**: Comprehensive error logging
 - **Error Statistics**: Error statistics collection
 - **Error Alerts**: Error alert mechanisms
 - **Error Analysis**: Error analysis capabilities
 
 ### Error Prevention
+
 - **Predictive Maintenance**: Predictive maintenance capabilities
 - **Error Prevention**: Error prevention mechanisms
 - **Quality Monitoring**: Quality monitoring features
@@ -517,24 +577,28 @@ Debug Interface Signals:
 ## Manufacturing and Test
 
 ### Production Test Requirements
+
 - **Test Coverage**: >95% fault coverage
 - **Test Time**: < 10 seconds per device
 - **Test Equipment**: Standard ATE equipment
 - **Test Yield**: >95% production yield target
 
 ### Test Categories
+
 - **Functional Test**: Basic functionality verification
 - **Performance Test**: Performance specification verification
 - **Reliability Test**: Reliability specification verification
 - **Environmental Test**: Environmental specification verification
 
 ### Test Access
+
 - **Test Interface**: Standard test interface
 - **Test Modes**: Multiple test mode configurations
 - **Test Vectors**: Comprehensive test vector set
 - **Test Automation**: Automated test execution
 
 ### Quality Assurance
+
 - **Quality Metrics**: Quality metric collection
 - **Quality Monitoring**: Quality monitoring capabilities
 - **Quality Reporting**: Quality reporting mechanisms
@@ -543,24 +607,28 @@ Debug Interface Signals:
 ## Scalability and Extensibility
 
 ### Multi-Card Support
+
 - **Card Slots**: Support for multiple SD card slots
 - **Card Management**: Multi-card management capabilities
 - **Card Switching**: Dynamic card switching
 - **Card Hot-Swap**: Hot-swap support
 
 ### Protocol Extensions
+
 - **Future Protocols**: Support for future SD protocols
 - **Protocol Adaptation**: Protocol adaptation capabilities
 - **Backward Compatibility**: Backward compatibility support
 - **Forward Compatibility**: Forward compatibility support
 
 ### Interface Extensions
+
 - **Additional Interfaces**: Support for additional interfaces
 - **Interface Adaptation**: Interface adaptation capabilities
 - **Interface Scaling**: Interface scaling capabilities
 - **Interface Migration**: Interface migration support
 
 ### Performance Scaling
+
 - **Clock Scaling**: Clock frequency scaling
 - **Throughput Scaling**: Throughput scaling capabilities
 - **Latency Scaling**: Latency optimization capabilities
@@ -569,24 +637,28 @@ Debug Interface Signals:
 ## Software Interface
 
 ### Driver API
+
 - **Standard API**: Standard driver API interface
 - **Platform Support**: Multiple platform support
 - **OS Compatibility**: Operating system compatibility
 - **Middleware Support**: Middleware integration support
 
 ### Operating System Support
+
 - **Linux Support**: Linux kernel driver support
 - **Windows Support**: Windows driver support
 - **RTOS Support**: Real-time OS support
 - **Embedded OS Support**: Embedded OS support
 
 ### Middleware Integration
+
 - **File System**: File system integration
 - **Storage Stack**: Storage stack integration
 - **Security Stack**: Security stack integration
 - **Performance Tools**: Performance monitoring tools
 
 ### Application Interface
+
 - **Application API**: Application-level API
 - **Library Support**: Software library support
 - **Development Tools**: Development tool support
@@ -595,6 +667,7 @@ Debug Interface Signals:
 ## Validation Strategy
 
 ### Verification Plan
+
 1. **Unit Testing**: Individual module verification
 2. **Integration Testing**: Interface integration verification
 3. **Protocol Testing**: SD card protocol compliance
@@ -605,24 +678,29 @@ Debug Interface Signals:
 8. **Compliance Testing**: Standards compliance verification
 
 ### Testbench Structure
-```
+
+Testbenches are organised per module, not per concern. Each RTL module has a
+SystemVerilog testbench and a cocotb test of the same name.
+
+```text
 tb/
-├── cocotb/
-│   ├── test_sdcard_controller.py
-│   ├── test_sdcard_protocol.py
-│   ├── test_sdcard_performance.py
-│   ├── test_sdcard_security.py
-│   └── test_sdcard_reliability.py
+├── Makefile                     # SIM={iverilog|verilator|vlog|vcs|cocotb}
 ├── sv_tb/
-│   ├── tb_sdcard_controller.sv
-│   ├── sdcard_card_model.sv
-│   ├── sdcard_protocol_checker.sv
-│   ├── sdcard_security_checker.sv
-│   └── sdcard_reliability_checker.sv
-└── Makefile
+│   ├── tb_sdcard_controller.sv  # top-level
+│   ├── sdcard_controller_tb.sv
+│   ├── simple_test.sv
+│   └── tb_sdcard_<module>.sv    # one per RTL module (16 total)
+└── cocotb/
+    ├── test_sdcard_controller.py
+    └── test_sdcard_<module>.py  # one per RTL module (16 total)
 ```
 
+Run with `make -C tb SIM=verilator run`. Per the Vyges verification policy the
+supported backends are Verilator and cocotb; Icarus is the Makefile default but
+is not the production path.
+
 ### Coverage Requirements
+
 - **Functional Coverage**: 95% minimum
 - **Code Coverage**: 90% minimum
 - **Protocol Coverage**: 100% for critical commands
@@ -633,7 +711,8 @@ tb/
 ## RTL and Testbench Development
 
 ### Module Hierarchy
-```
+
+```text
 sdcard_controller (top)
 ├── sdcard_apb_interface
 ├── sdcard_command_engine
@@ -654,7 +733,8 @@ sdcard_controller (top)
 
 ### Key Modules
 
-#### sd_card_controller (Top Module)
+#### sdcard_controller (Top Module)
+
 - Main controller module
 - APB interface integration
 - Clock and reset management
@@ -662,35 +742,40 @@ sdcard_controller (top)
 - Power management coordination
 - Security management coordination
 
-#### sd_command_engine
+#### sdcard_command_engine
+
 - Command generation and transmission
 - Response reception and parsing
 - Command timeout handling
 - State machine for command flow
 - Protocol compliance checking
 
-#### sd_data_engine
+#### sdcard_data_engine
+
 - Data block transmission/reception
 - CRC generation and checking
 - FIFO management
 - Data timeout handling
 - Performance optimization
 
-#### sd_power_controller
+#### sdcard_power_controller
+
 - Power state management
 - Power sequencing control
 - Voltage monitoring
 - Power fault detection
 - Power optimization
 
-#### sd_security_controller
+#### sdcard_security_controller
+
 - Access control management
 - Secure boot implementation
 - Tamper detection
 - Encryption support
 - Security logging
 
-#### sd_debug_controller
+#### sdcard_debug_controller
+
 - Debug interface management
 - Trace generation
 - Debug event handling
@@ -700,6 +785,7 @@ sdcard_controller (top)
 ## Flow Configuration
 
 ### OpenLane Configuration (ASIC)
+
 ```json
 {
   "PDK": "sky130B",
@@ -717,6 +803,7 @@ sdcard_controller (top)
 ```
 
 ### Vivado Configuration (FPGA)
+
 ```tcl
 set_property -name "part" -value "xc7a35tcpg236-1" -objects $obj
 set_property -name "board_part" -value "digilentinc:arty-a7-35:part0:1.0" -objects $obj
@@ -729,6 +816,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 ## Documentation Requirements
 
 ### Required Documents
+
 1. **Design Specification** (this document)
 2. **Architecture Guide**: [architecture.md](architecture.md) - Detailed internal architecture and design
 3. **User Guide**: Integration and usage instructions
@@ -743,6 +831,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 12. **Best Practices**: Design and integration best practices
 
 ### Documentation Standards
+
 - Markdown format for all documents
 - ASCII diagrams for block diagrams
 - Code examples for integration
@@ -754,6 +843,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 ## Testing and Verification
 
 ### Simulation Environment
+
 - **Testbench**: SystemVerilog and cocotb
 - **Simulator**: Verilator, Icarus Verilog
 - **Coverage**: Functional and code coverage
@@ -762,6 +852,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 - **Reliability Testing**: Reliability feature verification
 
 ### Test Cases
+
 1. **Basic Functionality**
    - Card initialization
    - Single block read/write
@@ -800,6 +891,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 ## Integration Guidelines
 
 ### System Integration
+
 1. **Clock Domain Crossing**: Proper synchronization
 2. **Reset Strategy**: Synchronous reset with proper sequencing
 3. **Interrupt Handling**: Edge-triggered interrupt generation
@@ -809,6 +901,7 @@ set_property -name "debug_features" -value "enabled" -objects $obj
 7. **Debug Integration**: Debug interface integration
 
 ### Configuration Examples
+
 ```verilog
 // Basic SD Card Controller instantiation
 sdcard_controller sdcard_ctrl (
@@ -846,24 +939,28 @@ sdcard_controller sdcard_ctrl (
 ## Risk Assessment
 
 ### Technical Risks
+
 - **Protocol Complexity**: SD protocol implementation complexity
 - **Timing Requirements**: Strict timing requirements
 - **Power Management**: Complex power management requirements
 - **Security Implementation**: Security feature implementation complexity
 
 ### Schedule Risks
+
 - **Development Time**: Extended development timeline
 - **Verification Time**: Comprehensive verification requirements
 - **Integration Time**: Complex system integration
 - **Certification Time**: Standards certification timeline
 
 ### Cost Risks
+
 - **Development Cost**: High development complexity cost
 - **Verification Cost**: Comprehensive verification cost
 - **Integration Cost**: System integration cost
 - **Certification Cost**: Standards certification cost
 
 ### Mitigation Strategies
+
 - **Risk Monitoring**: Continuous risk monitoring
 - **Risk Mitigation**: Proactive risk mitigation
 - **Contingency Planning**: Contingency plan development
@@ -872,24 +969,28 @@ sdcard_controller sdcard_ctrl (
 ## Dependencies and Constraints
 
 ### External Dependencies
+
 - **External IP**: Required external IP blocks
 - **Tool Dependencies**: Tool version dependencies
 - **Library Dependencies**: Software library dependencies
 - **Platform Dependencies**: Platform-specific dependencies
 
 ### Resource Constraints
+
 - **Area Constraints**: Silicon area limitations
 - **Power Constraints**: Power consumption limitations
 - **Timing Constraints**: Timing requirement constraints
 - **Cost Constraints**: Cost limitations
 
 ### Schedule Constraints
+
 - **Development Schedule**: Development timeline constraints
 - **Verification Schedule**: Verification timeline constraints
 - **Integration Schedule**: Integration timeline constraints
 - **Certification Schedule**: Certification timeline constraints
 
 ### Technical Constraints
+
 - **Technology Constraints**: Technology limitations
 - **Performance Constraints**: Performance limitations
 - **Compatibility Constraints**: Compatibility requirements
@@ -898,6 +999,7 @@ sdcard_controller sdcard_ctrl (
 ## CI/CD Pipeline
 
 ### Automated Testing
+
 - **Unit Tests**: Module-level verification
 - **Integration Tests**: Interface verification
 - **Regression Tests**: Full system verification
@@ -907,6 +1009,7 @@ sdcard_controller sdcard_ctrl (
 - **Compliance Tests**: Standards compliance verification
 
 ### Quality Gates
+
 - **Code Coverage**: >90%
 - **Functional Coverage**: >95%
 - **Security Coverage**: 100%
@@ -916,6 +1019,7 @@ sdcard_controller sdcard_ctrl (
 - **Documentation**: Complete and up-to-date
 
 ### Continuous Integration
+
 - **Build Automation**: Automated build process
 - **Test Automation**: Automated test execution
 - **Deployment Automation**: Automated deployment process
@@ -924,6 +1028,7 @@ sdcard_controller sdcard_ctrl (
 ## Catalog Publication
 
 ### Metadata Requirements
+
 - Complete interface definitions
 - Performance specifications
 - Target platform support
@@ -934,6 +1039,7 @@ sdcard_controller sdcard_ctrl (
 - Compliance specifications
 
 ### Quality Indicators
+
 - **Maturity Level**: Prototype
 - **Verification Status**: Verified
 - **Documentation**: Complete
@@ -945,4 +1051,4 @@ sdcard_controller sdcard_ctrl (
 
 ---
 
-*This specification follows Vyges conventions for hardware IP development and is designed for inclusion in the Vyges IP Catalog.* 
+*This specification follows Vyges conventions for hardware IP development and is designed for inclusion in the Vyges IP Catalog.*

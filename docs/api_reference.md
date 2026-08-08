@@ -1,165 +1,206 @@
 # SD Card Controller API Reference
 
+Everything below is derived from `rtl/sdcard_register_file.sv`, which is the
+authoritative source for offsets, access types, and bit positions.
+
 ## Register Map
 
-### Base Address: 0x4000_0000
+**Base address**: assigned by the integrator. The IP decodes only the offsets
+below; it has no opinion about where it sits in the system memory map.
 
-| Offset | Name | Access | Reset | Description |
-|--------|------|--------|-------|-------------|
-| 0x000 | CTRL | R/W | 0x0000_0000 | Control Register |
-| 0x004 | STAT | R | 0x0000_0000 | Status Register |
-| 0x008 | CLK_CFG | R/W | 0x0000_0000 | Clock Configuration |
-| 0x00C | PWR_CTRL | R/W | 0x0000_0000 | Power Control |
-| 0x010 | CMD_REG | R/W | 0x0000_0000 | Command Register |
-| 0x014 | CMD_ARG | R/W | 0x0000_0000 | Command Argument |
-| 0x018 | CMD_RESP | R | 0x0000_0000 | Command Response |
-| 0x01C | DATA_BUF | R/W | 0x0000_0000 | Data Buffer |
-| 0x020 | INT_EN | R/W | 0x0000_0000 | Interrupt Enable |
-| 0x024 | INT_STAT | R | 0x0000_0000 | Interrupt Status |
-| 0x028 | INT_CLR | W | 0x0000_0000 | Interrupt Clear |
-| 0x02C | DMA_CTRL | R/W | 0x0000_0000 | DMA Control |
-| 0x030 | DMA_ADDR | R/W | 0x0000_0000 | DMA Address |
-| 0x034 | DMA_LEN | R/W | 0x0000_0000 | DMA Length |
-| 0x038 | SEC_CTRL | R/W | 0x0000_0000 | Security Control |
-| 0x03C | SEC_KEY | R/W | 0x0000_0000 | Security Key |
-| 0x040 | DEBUG_CTRL | R/W | 0x0000_0000 | Debug Control |
-| 0x044 | DEBUG_DATA | R | 0x0000_0000 | Debug Data |
-| 0x048 | PERF_CTRL | R/W | 0x0000_0000 | Performance Control |
-| 0x04C | PERF_CNT | R | 0x0000_0000 | Performance Counter |
-| 0x050 | ERR_CTRL | R/W | 0x0000_0000 | Error Control |
-| 0x054 | ERR_STAT | R | 0x0000_0000 | Error Status |
+The APB address decoder accepts offsets `0x000`–`0x05C` inclusive and reports
+addresses above `0x05C` as invalid. All registers are 32 bits and word-aligned.
+
+| Offset | Register | Access | Reset | Description |
+| -------- | ---------- | -------- | ------- | ------------- |
+| 0x000 | `SD_CTRL` | R/W | 0x0000_0000 | Control register |
+| 0x004 | `SD_STATUS` | R | 0x0000_0000 | Status register |
+| 0x008 | `SD_CMD` | R/W | 0x0000_0000 | Command register |
+| 0x00C | `SD_ARG` | R/W | 0x0000_0000 | Command argument |
+| 0x010 | `SD_RESP0` | R | 0x0000_0000 | Command response word 0 |
+| 0x014 | `SD_RESP1` | R | 0x0000_0000 | Command response word 1 |
+| 0x018 | `SD_RESP2` | R | 0x0000_0000 | Command response word 2 |
+| 0x01C | `SD_RESP3` | R | 0x0000_0000 | Command response word 3 |
+| 0x020 | `SD_DATA` | R/W | 0x0000_0000 | Data register |
+| 0x024 | `SD_BLK_CNT` | R/W | 0x0000_0000 | Block count |
+| 0x028 | `SD_BLK_SIZE` | R/W | 0x0000_0000 | Block size |
+| 0x02C | `SD_TIMEOUT` | R/W | 0x0000_0000 | Timeout value |
+| 0x030 | `SD_CLK_DIV` | R/W | 0x0000_0000 | Clock divider |
+| 0x034 | `SD_INT_EN` | R/W | 0x0000_0000 | Interrupt enable |
+| 0x038 | `SD_INT_STAT` | R | 0x0000_0000 | Interrupt status |
+| 0x03C | `SD_DMA_CTRL` | R/W | 0x0000_0000 | DMA control |
+| 0x040 | `SD_PWR_CTRL` | R/W | 0x0000_0000 | Power control |
+| 0x044 | `SD_SEC_CTRL` | R/W | 0x0000_0000 | Security control |
+| 0x048 | `SD_DEBUG_CTRL` | R/W | 0x0000_0000 | Debug control |
+| 0x04C | `SD_TEST_CTRL` | R/W | 0x0000_0000 | Test control |
+| 0x050 | `SD_ERROR_CTRL` | R/W | 0x0000_0000 | Error control |
+| 0x054 | `SD_PERF_CTRL` | R/W | 0x0000_0000 | Performance control |
+| 0x058 | `SD_CAL_CTRL` | R/W | 0x0000_0000 | Calibration control |
+| 0x05C | `SD_VERSION` | R | 0x0100_0000 | Version, 1.0.0 |
+
+Writes are accepted only when no security violation is asserted and the register
+file is not write-protected; otherwise the write is dropped silently.
 
 ## Register Details
 
-### Control Register (CTRL)
-| Bit | Name | Access | Description |
-|-----|------|--------|-------------|
-| 31:16 | Reserved | R | Reserved |
-| 15 | EN_SEC | R/W | Enable Security |
-| 14 | EN_DMA | R/W | Enable DMA |
-| 13 | EN_INT | R/W | Enable Interrupts |
-| 12 | EN_DEBUG | R/W | Enable Debug |
-| 11 | EN_PERF | R/W | Enable Performance Monitoring |
-| 10 | EN_ERR | R/W | Enable Error Reporting |
-| 9 | EN_PWR | R/W | Enable Power Management |
-| 8 | EN_CLK | R/W | Enable Clock Generator |
-| 7:4 | CARD_TYPE | R/W | Card Type Selection |
-| 3:0 | BUS_WIDTH | R/W | Bus Width (1/4/8 bit) |
+Only the bits listed are decoded by the RTL. Unlisted bits are writable and
+read back on R/W registers but drive nothing.
 
-### Status Register (STAT)
-| Bit | Name | Access | Description |
-|-----|------|--------|-------------|
-| 31:16 | Reserved | R | Reserved |
-| 15 | CARD_PRESENT | R | Card Present |
-| 14 | CARD_WP | R | Card Write Protected |
-| 13 | CMD_BUSY | R | Command Busy |
-| 12 | DATA_BUSY | R | Data Transfer Busy |
-| 11 | DMA_BUSY | R | DMA Busy |
-| 10 | SEC_ACTIVE | R | Security Active |
-| 9 | DEBUG_ACTIVE | R | Debug Active |
-| 8 | PERF_ACTIVE | R | Performance Monitoring Active |
-| 7:4 | CARD_STATE | R | Card State |
-| 3:0 | ERROR_CODE | R | Error Code |
+### Control Register (`SD_CTRL`, 0x000)
 
-### Clock Configuration (CLK_CFG)
 | Bit | Name | Access | Description |
-|-----|------|--------|-------------|
-| 31:16 | CLK_DIV | R/W | Clock Divider |
-| 15:8 | CLK_FREQ | R/W | Clock Frequency |
-| 7:4 | CLK_SRC | R/W | Clock Source |
-| 3:0 | CLK_MODE | R/W | Clock Mode |
+| ----- | ------ | -------- | ------------- |
+| 14 | `CLK_EN` | R/W | Clock generator enable |
+| 3 | `DATA_START` | R/W | Start a data transfer |
+| 2 | `DATA_VALID` | R/W | Data valid; also drives the FIFO write strobe |
+| others | — | R/W | Not decoded |
+
+Bit 2 drives both `data_valid` and `fifo_write`; they are the same signal.
+A FIFO read strobe on bit 1 exists in the source but is commented out and has
+no effect.
+
+### Status Register (`SD_STATUS`, 0x004, read-only)
+
+Driven directly from internal status inputs every clock.
+
+| Bit | Name | Description |
+| ----- | ------ | ------------- |
+| 31:16 | Reserved | Reads as 0 |
+| 15 | `POWER_GOOD` | Power good |
+| 14 | `POWER_FAULT` | Power fault |
+| 13 | `CMD_BUSY` | Command busy |
+| 12 | `CMD_DONE` | Command done |
+| 11 | `CMD_TIMEOUT` | Command timeout |
+| 10 | `CMD_CRC_ERROR` | Command CRC error |
+| 9 | `DATA_BUSY` | Data busy |
+| 8 | `DATA_DONE` | Data done |
+| 7 | `DATA_CRC_ERROR` | Data CRC error |
+| 6 | `DMA_BUSY` | DMA busy |
+| 5 | `DMA_DONE` | DMA done |
+| 4 | `DMA_ERROR` | DMA error |
+| 3 | `FIFO_FULL` | FIFO full |
+| 2 | `FIFO_EMPTY` | FIFO empty |
+| 1 | `CLK_CALIBRATED` | Clock calibrated |
+| 0 | `CAL_DONE` | Calibration done |
+
+### Command Register (`SD_CMD`, 0x008)
+
+| Bit | Name | Access | Description |
+| ----- | ------ | -------- | ------------- |
+| 31 | `CMD_START` | R/W | Start command transmission |
+| 5:0 | `CMD_INDEX` | R/W | SD command index |
+| others | — | R/W | Not decoded |
+
+### Response Registers (`SD_RESP0`–`SD_RESP3`, 0x010–0x01C, read-only)
+
+Loaded when a command completes:
+
+- `SD_RESP0` = `{8'h00, cmd_response[39:16]}`
+- `SD_RESP1` = `{cmd_response[15:0], 16'h0000}`
+- `SD_RESP2`, `SD_RESP3` = 0
+
+Only a 40-bit response is captured, so `SD_RESP2` and `SD_RESP3` are always
+zero. Long (R2/136-bit) responses are not currently unpacked into these
+registers.
+
+### Clock Divider (`SD_CLK_DIV`, 0x030)
+
+| Bit | Name | Access | Description |
+| ----- | ------ | -------- | ------------- |
+| 15:0 | `CLK_DIV` | R/W | Divider for the SD clock |
+| 31:16 | — | R/W | Not decoded |
+
+### DMA Control (`SD_DMA_CTRL`, 0x03C)
+
+| Bit | Name | Access | Description |
+| ----- | ------ | -------- | ------------- |
+| 31:16 | `DMA_BASE` | R/W | Base address, used as `DMA_BASE << 16` |
+| 15:0 | `DMA_LEN` | R/W | Transfer length |
+| 0 | `DMA_EN` | R/W | DMA enable |
+
+Bit 0 is decoded both as `DMA_EN` and as the least-significant bit of
+`DMA_LEN`; the two overlap in the RTL. Setting an odd length therefore also
+asserts the enable. Treat lengths as even until this is separated.
+
+### Power Control (`SD_PWR_CTRL`, 0x040)
+
+| Bit | Name | Access | Description |
+| ----- | ------ | -------- | ------------- |
+| 11:8 | `VOLTAGE_SEL` | R/W | Voltage select |
+| 1:0 | `POWER_STATE` | R/W | Requested power state |
+| others | — | R/W | Not decoded |
+
+### Debug Control (`SD_DEBUG_CTRL`, 0x048)
+
+| Bit | Name | Access | Description |
+| ----- | ------ | -------- | ------------- |
+| 1 | `JTAG_EN` | R/W | JTAG enable |
+| 0 | `DEBUG_EN` | R/W | Debug enable |
+| others | — | R/W | Not decoded |
+
+### Calibration Control (`SD_CAL_CTRL`, 0x058)
+
+| Bit | Name | Access | Description |
+| ----- | ------ | -------- | ------------- |
+| 0 | `CAL_START` | R/W | Start calibration |
+| others | — | R/W | Not decoded |
+
+### Interrupt Status (`SD_INT_STAT`, 0x038, read-only)
+
+| Bit | Name | Description |
+| ----- | ------ | ------------- |
+| 31:4 | Reserved | Reads as 0 |
+| 3:0 | `INT_STATUS` | Interrupt status from the interrupt controller |
+
+There is no write-1-to-clear register. Interrupt state is managed inside
+`sdcard_interrupt_controller` and cleared through its own acknowledge and clear
+states, not by an APB write.
+
+### Registers stored but not acted on
+
+These are writable and read back, but their outputs are commented out in
+`sdcard_register_file.sv`, so writing them changes no behaviour today:
+
+| Register | Intended bits | Status |
+| ---------- | --------------- | -------- |
+| `SD_INT_EN` (0x034) | `[3:0]` interrupt enable | Connection commented out |
+| `SD_SEC_CTRL` (0x044) | `[0]` security lock | Connection commented out |
+| `SD_ERROR_CTRL` (0x050) | `[0]` error clear, `[1]` error interrupt | Connections commented out |
+| `SD_TEST_CTRL` (0x04C) | — | Stored only, no decode |
+| `SD_PERF_CTRL` (0x054) | — | Stored only, no decode |
+
+`SD_ARG`, `SD_DATA`, `SD_BLK_CNT`, `SD_BLK_SIZE`, and `SD_TIMEOUT` are stored
+and read back; they are consumed by the command and data engines rather than
+decoded bit-wise here.
 
 ## Programming Interface
 
-### C API Functions
+> **No driver ships with this IP.** The repository contains no C sources or
+> headers. The sketch below is a proposed shape for a driver, not an API you can
+> link against, and no part of it has been implemented or tested.
 
 ```c
-// Initialize SD Card Controller
+// Proposed, not implemented.
 int sdcard_init(void);
-
-// Configure clock settings
-int sdcard_config_clock(uint32_t freq, uint32_t div);
-
-// Send SD command
+int sdcard_config_clock(uint32_t divider);          // writes SD_CLK_DIV
 int sdcard_send_command(uint8_t cmd, uint32_t arg, uint32_t *resp);
-
-// Read data block
 int sdcard_read_block(uint32_t addr, uint8_t *data, uint32_t len);
-
-// Write data block
 int sdcard_write_block(uint32_t addr, uint8_t *data, uint32_t len);
-
-// Configure DMA
-int sdcard_config_dma(uint32_t addr, uint32_t len);
-
-// Enable interrupts
-int sdcard_enable_interrupts(uint32_t mask);
-
-// Get status
-int sdcard_get_status(uint32_t *status);
-
-// Configure security
-int sdcard_config_security(uint32_t key, uint32_t mode);
-
-// Enable debug
-int sdcard_enable_debug(uint32_t mode);
-
-// Get performance counters
-int sdcard_get_performance(uint32_t *counters);
+int sdcard_config_dma(uint32_t base, uint16_t len); // writes SD_DMA_CTRL
+int sdcard_get_status(uint32_t *status);            // reads SD_STATUS
 ```
 
-### Error Codes
+A minimal command sequence against the registers as they exist:
 
-| Code | Name | Description |
-|------|------|-------------|
-| 0 | SDCARD_OK | Success |
-| -1 | SDCARD_ERR_TIMEOUT | Command timeout |
-| -2 | SDCARD_ERR_CRC | CRC error |
-| -3 | SDCARD_ERR_CARD | Card error |
-| -4 | SDCARD_ERR_PARAM | Invalid parameter |
-| -5 | SDCARD_ERR_BUSY | Device busy |
-| -6 | SDCARD_ERR_SECURITY | Security error |
-| -7 | SDCARD_ERR_DMA | DMA error |
-| -8 | SDCARD_ERR_POWER | Power error |
+1. Write the divider to `SD_CLK_DIV` (0x030) and set `SD_CTRL[14]` to enable the clock.
+2. Poll `SD_STATUS[1]` (`CLK_CALIBRATED`) if calibration is in use.
+3. Write the argument to `SD_ARG` (0x00C).
+4. Write the index to `SD_CMD[5:0]` with `SD_CMD[31]` set to start.
+5. Poll `SD_STATUS[12]` (`CMD_DONE`), checking `[11]` timeout and `[10]` CRC error.
+6. Read the response from `SD_RESP0` and `SD_RESP1`.
 
-### Interrupt Handling
+## Timing
 
-```c
-// Interrupt handler
-void sdcard_interrupt_handler(void) {
-    uint32_t status = sdcard_read_reg(INT_STAT);
-    
-    if (status & INT_CMD_DONE) {
-        // Command completed
-    }
-    
-    if (status & INT_DATA_DONE) {
-        // Data transfer completed
-    }
-    
-    if (status & INT_ERROR) {
-        // Error occurred
-    }
-    
-    // Clear interrupts
-    sdcard_write_reg(INT_CLR, status);
-}
-```
-
-## Timing Specifications
-
-### APB Interface Timing
-- Setup time: 2ns
-- Hold time: 1ns
-- Access time: 10ns
-
-### SD Card Interface Timing
-- Clock frequency: 400kHz to 208MHz
-- Command setup: 5ns
-- Data setup: 3ns
-- Response time: 1μs typical
-
-### DMA Transfer Timing
-- Burst size: 1-16 words
-- Transfer rate: Up to 104MB/s
-- Latency: < 1μs 
+See `docs/architecture.md`. Those figures are design targets; no timing
+characterisation has been run. The SD clock range implemented by
+`sdcard_clock_generator` is 400kHz to 50MHz.

@@ -8,7 +8,7 @@ A high-performance SD Card controller with APB interface supporting SD/SDHC/SDXC
 
 ## 🚀 Features
 
-- **Protocol Support**: SD 1.0/1.1, SDHC 2.0, SDXC 3.0, UHS-I support
+- **Protocol Support**: SD 1.0/1.1, SDHC 2.0, SDXC 3.0
 - **Interface Modes**: SPI mode and SD mode operation
 - **APB Interface**: Standard APB slave interface for easy integration
 - **DMA Support**: Optional DMA controller for high-speed transfers
@@ -19,13 +19,13 @@ A high-performance SD Card controller with APB interface supporting SD/SDHC/SDXC
 - **Error Handling**: Robust error detection and recovery mechanisms
 - **Calibration Support**: Automatic timing and signal calibration
 - **Test Interface**: Built-in self-test and manufacturing test support
-- **Performance**: Up to 104MB/s (UHS-I), 25MB/s (SD mode), 12.5MB/s (SPI mode)
+- **Performance**: 25MB/s (SD mode), 12.5MB/s (SPI mode) — design targets, not measured
 - **Target Platforms**: ASIC (Sky130B) and FPGA (Xilinx, Intel)
 
 ## 📋 Specifications
 
-- **Clock Frequency**: Up to 100MHz (system), 208MHz (SD UHS-I), 50MHz (SD mode), 25MHz (SPI mode)
-- **Data Transfer Rate**: Up to 104MB/s (UHS-I), 25MB/s (SD mode), 12.5MB/s (SPI mode)
+- **Clock Frequency**: Up to 100MHz (APB), 50MHz (SD mode), 25MHz (SPI mode)
+- **Data Transfer Rate**: Up to 25MB/s (SD mode), 12.5MB/s (SPI mode)
 - **Command Response Time**: < 1μs typical
 - **Block Transfer Time**: < 1ms per 512-byte block
 - **Power Consumption**: < 50mW active, < 5mW idle
@@ -94,87 +94,139 @@ The SD Card Controller consists of the following key modules:
 ## 🔌 Integration
 
 ### Basic Instantiation
+
+Port names and widths are taken from `rtl/sdcard_controller.sv`.
+
 ```systemverilog
-sdcard_controller sdcard_ctrl (
-    .PCLK_i       (system_clk),
-    .PRESETn_i    (system_reset_n),
-    .psel_i       (apb_psel),
-    .penable_i    (apb_penable),
-    .pwrite_i     (apb_pwrite),
-    .paddr_i      (apb_paddr),
-    .pwdata_i     (apb_pwdata),
-    .prdata_o     (apb_prdata),
-    .pready_o     (apb_pready),
-    .pslverr_o    (apb_pslverr),
-    .sd_clk_o     (sd_clk),
-    .sd_cmd_io    (sd_cmd),
-    .sd_data_io   (sd_data),
-    .sd_cd_i      (sd_card_detect),
-    .sd_wp_i      (sd_write_protect),
-    .irq_o        (sd_interrupt),
-    .debug_clk_o  (debug_clk),
-    .debug_data_o (debug_data),
-    .debug_valid_o(debug_valid),
-    .test_mode_i  (test_mode),
-    .test_clk_i   (test_clk),
-    .test_data_i  (test_data),
-    .test_valid_i (test_valid)
+sdcard_controller #(
+    .SDCARD_APB_ADDR_WIDTH  (16),
+    .SDCARD_DATA_WIDTH      (4),
+    .SDCARD_FIFO_DEPTH      (512),
+    .SDCARD_DMA_ENABLE      (1'b1),
+    .SDCARD_SPI_MODE_ENABLE (1'b1)
+) sdcard_ctrl (
+    // APB slave
+    .PCLK_i        (system_clk),
+    .PRESETn_i     (system_reset_n),
+    .PSEL_i        (apb_psel),
+    .PENABLE_i     (apb_penable),
+    .PWRITE_i      (apb_pwrite),
+    .PADDR_i       (apb_paddr),        // [SDCARD_APB_ADDR_WIDTH-1:0]
+    .PWDATA_i      (apb_pwdata),
+    .PRDATA_o      (apb_prdata),
+    .PREADY_o      (apb_pready),
+    .PSLVERR_o     (apb_pslverr),
+
+    // SD card
+    .sd_clk_o      (sd_clk),
+    .sd_cmd_io     (sd_cmd),
+    .sd_dat_io     (sd_dat),           // [SDCARD_DATA_WIDTH-1:0]
+    .sd_cd_i       (sd_card_detect),
+    .sd_wp_i       (sd_write_protect),
+    .sd_pwr_en_o   (sd_power_enable),
+    .sd_vdd_sel_o  (sd_voltage_select),
+
+    // Interrupts, four separate lines
+    .sd_irq_o      (sd_interrupt),
+    .dma_irq_o     (dma_interrupt),
+    .error_irq_o   (error_interrupt),
+    .debug_irq_o   (debug_interrupt),
+
+    // DMA
+    .dma_req_o     (dma_req),
+    .dma_ack_i     (dma_ack),
+    .dma_addr_o    (dma_addr),
+    .dma_len_o     (dma_len),
+    .dma_we_o      (dma_we),
+    .dma_burst_o   (dma_burst),
+    .dma_cache_o   (dma_cache),
+
+    // JTAG and trace
+    .jtag_tck_i    (jtag_tck),
+    .jtag_tms_i    (jtag_tms),
+    .jtag_tdi_i    (jtag_tdi),
+    .jtag_tdo_o    (jtag_tdo),
+    .jtag_trst_n_i (jtag_trst_n),
+    .trace_data_o  (trace_data),
+    .trace_valid_o (trace_valid)
 );
 ```
 
 ### Pinout Table
 
+All 35 top-level ports. Bus widths shown as declared; `PADDR_i` and `sd_dat_io`
+follow their parameters, with defaults of 16 and 4 bits.
+
 | Pin Name | Direction | Type | Description |
-|----------|-----------|------|-------------|
-| clk_i | Input | Clock | System clock (100MHz max) |
-| reset_n_i | Input | Reset | Active-low reset |
-| psel_i | Input | Control | APB select signal |
-| penable_i | Input | Control | APB enable signal |
-| pwrite_i | Input | Control | APB write signal |
-| paddr_i[11:0] | Input | Address | APB address bus |
-| pwdata_i[31:0] | Input | Data | APB write data |
-| prdata_o[31:0] | Output | Data | APB read data |
-| pready_o | Output | Control | APB ready signal |
-| pslverr_o | Output | Control | APB slave error |
+| ---------- | ----------- | ------ | ------------- |
+| PCLK_i | Input | Clock | APB clock |
+| PRESETn_i | Input | Reset | APB reset, active low |
+| PSEL_i | Input | Control | APB select |
+| PENABLE_i | Input | Control | APB enable |
+| PWRITE_i | Input | Control | APB write enable |
+| PADDR_i[SDCARD_APB_ADDR_WIDTH-1:0] | Input | Address | APB address bus |
+| PWDATA_i[31:0] | Input | Data | APB write data |
+| PRDATA_o[31:0] | Output | Data | APB read data |
+| PREADY_o | Output | Control | APB ready |
+| PSLVERR_o | Output | Control | APB slave error |
 | sd_clk_o | Output | Clock | SD card clock |
 | sd_cmd_io | Bidirectional | Data | SD command line |
-| sd_data_io[3:0] | Bidirectional | Data | SD data lines |
-| sd_cd_i | Input | Status | Card detect signal |
-| sd_wp_i | Input | Status | Write protect signal |
-| irq_o | Output | Interrupt | Interrupt output |
-| debug_clk_o | Output | Clock | Debug clock |
-| debug_data_o[7:0] | Output | Data | Debug data |
-| debug_valid_o | Output | Control | Debug valid |
-| test_mode_i | Input | Control | Test mode enable |
-| test_clk_i | Input | Clock | Test clock |
-| test_data_i[7:0] | Input | Data | Test data |
-| test_valid_i | Input | Control | Test valid |
+| sd_dat_io[SDCARD_DATA_WIDTH-1:0] | Bidirectional | Data | SD data lines |
+| sd_cd_i | Input | Status | Card detect |
+| sd_wp_i | Input | Status | Write protect |
+| sd_pwr_en_o | Output | Control | SD card power enable |
+| sd_vdd_sel_o | Output | Control | SD card voltage select |
+| sd_irq_o | Output | Interrupt | SD card interrupt |
+| dma_irq_o | Output | Interrupt | DMA transfer complete interrupt |
+| error_irq_o | Output | Interrupt | Error condition interrupt |
+| debug_irq_o | Output | Interrupt | Debug event interrupt |
+| dma_req_o | Output | Control | DMA request |
+| dma_ack_i | Input | Control | DMA acknowledge |
+| dma_addr_o[31:0] | Output | Address | DMA address |
+| dma_len_o[15:0] | Output | Control | DMA length |
+| dma_we_o | Output | Control | DMA write enable |
+| dma_burst_o | Output | Control | DMA burst mode |
+| dma_cache_o[3:0] | Output | Control | DMA cache attributes |
+| jtag_tck_i | Input | Debug | JTAG test clock |
+| jtag_tms_i | Input | Debug | JTAG test mode select |
+| jtag_tdi_i | Input | Debug | JTAG test data input |
+| jtag_tdo_o | Output | Debug | JTAG test data output |
+| jtag_trst_n_i | Input | Debug | JTAG test reset |
+| trace_data_o[7:0] | Output | Debug | Trace data output |
+| trace_valid_o | Output | Debug | Trace data valid |
 
 ### Register Map
-| Address | Register | Access | Description |
-|---------|----------|--------|-------------|
-| 0x000 | CTRL | R/W | Control Register |
-| 0x004 | STAT | R | Status Register |
-| 0x008 | CLK_CFG | R/W | Clock Configuration |
-| 0x00C | PWR_CTRL | R/W | Power Control |
-| 0x010 | CMD_REG | R/W | Command Register |
-| 0x014 | CMD_ARG | R/W | Command Argument |
-| 0x018 | CMD_RESP | R | Command Response |
-| 0x01C | DATA_BUF | R/W | Data Buffer |
-| 0x020 | INT_EN | R/W | Interrupt Enable |
-| 0x024 | INT_STAT | R | Interrupt Status |
-| 0x028 | INT_CLR | W | Interrupt Clear |
-| 0x02C | DMA_CTRL | R/W | DMA Control |
-| 0x030 | DMA_ADDR | R/W | DMA Address |
-| 0x034 | DMA_LEN | R/W | DMA Length |
-| 0x038 | SEC_CTRL | R/W | Security Control |
-| 0x03C | SEC_KEY | R/W | Security Key |
-| 0x040 | DEBUG_CTRL | R/W | Debug Control |
-| 0x044 | DEBUG_DATA | R | Debug Data |
-| 0x048 | PERF_CTRL | R/W | Performance Control |
-| 0x04C | PERF_CNT | R | Performance Counter |
-| 0x050 | ERR_CTRL | R/W | Error Control |
-| 0x054 | ERR_STAT | R | Error Status |
+
+Offsets from `rtl/sdcard_register_file.sv`. Base address is chosen by the
+integrator; the IP decodes `0x000`–`0x05C` only. Bit-level detail is in
+[docs/api_reference.md](docs/api_reference.md).
+
+| Offset | Register | Access | Description |
+| -------- | ---------- | -------- | ------------- |
+| 0x000 | `SD_CTRL` | R/W | Control register |
+| 0x004 | `SD_STATUS` | R | Status register |
+| 0x008 | `SD_CMD` | R/W | Command register |
+| 0x00C | `SD_ARG` | R/W | Command argument |
+| 0x010 | `SD_RESP0` | R | Command response word 0 |
+| 0x014 | `SD_RESP1` | R | Command response word 1 |
+| 0x018 | `SD_RESP2` | R | Command response word 2 |
+| 0x01C | `SD_RESP3` | R | Command response word 3 |
+| 0x020 | `SD_DATA` | R/W | Data register |
+| 0x024 | `SD_BLK_CNT` | R/W | Block count |
+| 0x028 | `SD_BLK_SIZE` | R/W | Block size |
+| 0x02C | `SD_TIMEOUT` | R/W | Timeout value |
+| 0x030 | `SD_CLK_DIV` | R/W | Clock divider |
+| 0x034 | `SD_INT_EN` | R/W | Interrupt enable |
+| 0x038 | `SD_INT_STAT` | R | Interrupt status |
+| 0x03C | `SD_DMA_CTRL` | R/W | DMA control |
+| 0x040 | `SD_PWR_CTRL` | R/W | Power control |
+| 0x044 | `SD_SEC_CTRL` | R/W | Security control |
+| 0x048 | `SD_DEBUG_CTRL` | R/W | Debug control |
+| 0x04C | `SD_TEST_CTRL` | R/W | Test control |
+| 0x050 | `SD_ERROR_CTRL` | R/W | Error control |
+| 0x054 | `SD_PERF_CTRL` | R/W | Performance control |
+| 0x058 | `SD_CAL_CTRL` | R/W | Calibration control |
+| 0x05C | `SD_VERSION` | R | Version, reads 0x0100_0000 |
 
 ## 🧪 Testing
 
@@ -219,12 +271,14 @@ make coverage
 ## 📦 Supported Platforms
 
 ### ASIC
+
 - **PDK**: Sky130B
 - **Tools**: OpenLane, Yosys, OpenROAD
 - **Clock**: Up to 50MHz
 - **Area**: ~0.05mm²
 
 ### FPGA
+
 - **Boards**: Arty-A7-35, compatible with CFU Playground
 - **Tools**: Vivado, Quartus
 - **Clock**: Up to 100MHz

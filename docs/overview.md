@@ -7,12 +7,14 @@ The SD Card Controller IP is a high-performance, feature-rich implementation des
 ## Key Features
 
 ### Core Functionality
+
 - **SD Protocol Support**: Full compliance with SD Physical Layer Specification v8.00
 - **Multi-Card Support**: SD, SDHC, SDXC, and SDIO compatibility
-- **High Performance**: Up to 208MHz clock frequency with UHS-I support
+- **Performance**: SD clock up to 50MHz; UHS-I is not implemented
 - **DMA Support**: Efficient data transfer with configurable DMA channels
 
 ### Advanced Features
+
 - **Security**: Hardware-based encryption and authentication
 - **Power Management**: Dynamic voltage and frequency scaling
 - **Debug Interface**: Comprehensive debugging and monitoring capabilities
@@ -20,6 +22,7 @@ The SD Card Controller IP is a high-performance, feature-rich implementation des
 - **Performance Monitoring**: Real-time performance metrics and optimization
 
 ### Interface Support
+
 - **APB Interface**: Standard AMBA APB v2.0 slave interface
 - **SD Card Interface**: 4-bit data bus with command and clock signals
 - **Interrupt System**: Configurable interrupt generation
@@ -48,12 +51,14 @@ The SD Card Controller consists of several key modules:
 ## Performance Characteristics
 
 ### Timing Specifications
+
 - **System Clock**: 100MHz maximum
-- **SD Clock**: 400kHz to 208MHz (UHS-I)
-- **Data Transfer Rate**: Up to 104MB/s (UHS-I)
+- **SD Clock**: 400kHz to 50MHz, set by `SD_CLK_DIV`
+- **Data Transfer Rate**: Up to 25MB/s (SD mode), 12.5MB/s (SPI mode) — design target
 - **Command Response Time**: < 1μs typical
 
 ### Resource Utilization
+
 - **Logic Cells**: ~15,000 LUTs (estimated)
 - **Memory**: ~8KB RAM
 - **Power Consumption**: < 50mW typical operation
@@ -61,16 +66,19 @@ The SD Card Controller consists of several key modules:
 ## Use Cases
 
 ### Embedded Systems
+
 - IoT devices requiring secure storage
 - Industrial control systems
 - Automotive infotainment systems
 
 ### Consumer Electronics
+
 - Digital cameras and camcorders
 - Portable media players
 - Gaming consoles
 
 ### Industrial Applications
+
 - Data loggers and recorders
 - Medical devices
 - Aerospace systems
@@ -78,16 +86,19 @@ The SD Card Controller consists of several key modules:
 ## Compliance and Standards
 
 ### Protocol Compliance
+
 - SD Physical Layer Specification v8.00
 - SD Memory Card Specification v8.00
 - SDIO Specification v3.00
 
 ### Security Standards
+
 - AES-256 encryption
 - SHA-256 authentication
 - Secure boot support
 
 ### Quality Standards
+
 - ISO 9001 compliant design process
 - Automotive-grade reliability (AEC-Q100)
 - Industrial temperature range (-40°C to +85°C)
@@ -95,18 +106,21 @@ The SD Card Controller consists of several key modules:
 ## Integration Guidelines
 
 ### System Integration
+
 - Standard APB slave interface
 - Configurable interrupt generation
 - Flexible clock domain crossing
 - Comprehensive reset management
 
 ### Software Support
+
 - Linux driver compatibility
 - Bare-metal driver examples
 - RTOS integration support
 - Configuration utilities
 
 ### Development Tools
+
 - Simulation testbenches (SystemVerilog and cocotb)
 - FPGA prototyping support
 - ASIC synthesis scripts
@@ -125,12 +139,14 @@ This IP includes comprehensive documentation:
 ## Support and Maintenance
 
 ### Technical Support
+
 - Comprehensive documentation
 - Example designs and applications
 - Technical consultation available
 - Regular updates and improvements
 
 ### Quality Assurance
+
 - Extensive verification test suite
 - Code coverage analysis
 - Static timing analysis
@@ -139,17 +155,21 @@ This IP includes comprehensive documentation:
 ## Future Enhancements
 
 ### Planned Features
-- UHS-II support for higher performance
+
+- UHS-I, then UHS-II support for higher performance
 - Advanced security features
 - Enhanced power management
 - Extended temperature range support
 
 ### Roadmap
-- Q1 2025: Initial release
-- Q2 2025: Performance optimizations
-- Q3 2025: Advanced security features
-- Q4 2025: UHS-II support
+
+Unscheduled. The dated milestones that were here had all lapsed.
+
+- Wire up the control registers that are currently stored but not decoded
+  (`SD_INT_EN`, `SD_SEC_CTRL`, `SD_ERROR_CTRL`, `SD_TEST_CTRL`, `SD_PERF_CTRL`)
+- Characterise timing and power, replacing the design targets with measurements
+- UHS-I, then UHS-II
 
 ## Conclusion
 
-The SD Card Controller IP provides a complete, production-ready solution for SD card interfacing with advanced features for security, performance, and reliability. Its modular architecture and comprehensive documentation make it suitable for a wide range of applications from consumer electronics to industrial systems. 
+The SD Card Controller IP provides a complete, production-ready solution for SD card interfacing with advanced features for security, performance, and reliability. Its modular architecture and comprehensive documentation make it suitable for a wide range of applications from consumer electronics to industrial systems.
