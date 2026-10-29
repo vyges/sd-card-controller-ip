@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}
     steps:
     - uses: actions/checkout@v7
     
@@ -36,7 +36,7 @@ jobs:
         verilator --lint-only --top-module sdcard_controller rtl/*.sv
 
   simulation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}
     strategy:
       matrix:
         simulator: [iverilog, verilator]
@@ -58,7 +58,7 @@ jobs:
         make SIM=${{ matrix.simulator }} run
 
   cocotb-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}
     steps:
     - uses: actions/checkout@v7
     
@@ -83,7 +83,7 @@ jobs:
         make SIM=cocotb run
 
   synthesis:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}
     steps:
     - uses: actions/checkout@v7
     
@@ -109,7 +109,7 @@ jobs:
           rtl/*.sv
 
   documentation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}
     steps:
     - uses: actions/checkout@v7
     
@@ -130,7 +130,7 @@ jobs:
         find docs/ -name "*.md" -exec grep -l "TODO" {} \; || true
 
   coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}
     steps:
     - uses: actions/checkout@v7
     
